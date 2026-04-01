@@ -1,0 +1,10 @@
+{
+  "region_code": "US",
+  "region_name": "美国 (美西洛杉矶)",
+  "google_module": {
+    "base_lat": 34.0522,
+    "base_lon": -118.2437,
+    "lang_params": "hl=en&gl=us&ceid=US:en",
+    "valid_url_suffix": "google.com"
+  }
+}
