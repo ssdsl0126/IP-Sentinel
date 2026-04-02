@@ -4,7 +4,7 @@
     "base_lat": 35.6812,
     "base_lon": 139.7671,
     "lang_params": "hl=ja&gl=JP",
-    "valid_url_suffix": "co.jp"
+    "valid_url_suffix": "com" 
   },
   "trust_module": {
     "white_urls": [
