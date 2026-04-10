@@ -161,35 +161,53 @@ if [[ "$TG_CHOICE" =~ ^[Yy]$ ]]; then
     [ -n "$INPUT_PORT" ] && AGENT_PORT="$INPUT_PORT"
 fi
 
-# ================== [v3.0.1新增修改 1: 网络栈探测与锚点锁定] ==================
-echo -e "\n[4.5/7] 正在探测本机网络栈与可用出口..."
-DETECT_V4=$(curl -4 -s -m 3 api.ip.sb/ip | tr -d '[:space:]')
-DETECT_V6=$(curl -6 -s -m 3 api.ip.sb/ip | tr -d '[:space:]')
+# ================== [v3.0.1新增修改 1: 冗余网络栈探测与锚点锁定] ==================
+echo -e "\n\033[36m[4.5/7] 正在探测本机网络栈与可用出口 (多节点雷达扫描中)...\033[0m"
 
-DEFAULT_IP=""
-IP_PREF="4"
-if [ -n "$DETECT_V4" ]; then
-    DEFAULT_IP="$DETECT_V4"; IP_PREF="4"
-elif [ -n "$DETECT_V6" ]; then
-    DEFAULT_IP="$DETECT_V6"; IP_PREF="6"
+# 引入容灾机制：依次尝试三个不同的 API，拿到有效的 IP 格式就停止
+DETECT_V4=$( (curl -4 -s -m 3 api.ip.sb/ip || curl -4 -s -m 3 ifconfig.me || curl -4 -s -m 3 ipv4.icanhazip.com) 2>/dev/null | grep -E "^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | head -n 1 | tr -d '[:space:]')
+DETECT_V6=$( (curl -6 -s -m 3 api.ip.sb/ip || curl -6 -s -m 3 ifconfig.me || curl -6 -s -m 3 ipv6.icanhazip.com) 2>/dev/null | grep -E "^[0-9a-fA-F:]+.*:" | head -n 1 | tr -d '[:space:]')
+
+# 构建动态选项数组
+IP_OPTIONS=()
+IP_PROTO=()
+
+[[ -n "$DETECT_V4" ]] && { IP_OPTIONS+=("$DETECT_V4"); IP_PROTO+=("4"); }
+[[ -n "$DETECT_V6" ]] && { IP_OPTIONS+=("$DETECT_V6"); IP_PROTO+=("6"); }
+
+if [ ${#IP_OPTIONS[@]} -eq 0 ]; then
+    echo -e "\033[33m⚠️ 雷达受阻：未能自动探测到公网 IP，请手动指定。\033[0m"
+    read -p "请输入您要绑定的公网 IP (v4 或 v6): " PUBLIC_IP
+    [[ "$PUBLIC_IP" == *":"* ]] && IP_PREF="6" || IP_PREF="4"
+else
+    echo "📍 发现可用出口 IP，请选择要注册与养护的锚点:"
+    for i in "${!IP_OPTIONS[@]}"; do
+        num=$((i+1))
+        if [ "${IP_PROTO[$i]}" == "4" ]; then
+            echo "  $num) 🌐 IPv4: ${IP_OPTIONS[$i]} (默认选项)"
+        else
+            echo "  $num) 🌌 IPv6: ${IP_OPTIONS[$i]}"
+        fi
+    done
+    CUSTOM_OPT=$(( ${#IP_OPTIONS[@]} + 1 ))
+    echo "  $CUSTOM_OPT) ✍️ 手动指定其他 IP (适合多 IP 站群机)"
+    
+    read -p "请输入选择 (默认1): " IP_CHOICE
+    IP_CHOICE=${IP_CHOICE:-1}
+    
+    if [ "$IP_CHOICE" -le "${#IP_OPTIONS[@]}" ] && [ "$IP_CHOICE" -gt 0 ]; then
+        idx=$((IP_CHOICE-1))
+        PUBLIC_IP="${IP_OPTIONS[$idx]}"
+        IP_PREF="${IP_PROTO[$idx]}"
+    elif [ "$IP_CHOICE" -eq "$CUSTOM_OPT" ]; then
+        read -p "请输入您要绑定的公网 IP (v4 或 v6): " PUBLIC_IP
+        [[ "$PUBLIC_IP" == *":"* ]] && IP_PREF="6" || IP_PREF="4"
+    else
+        # 兜底：乱输就默认选第一个
+        PUBLIC_IP="${IP_OPTIONS[0]}"
+        IP_PREF="${IP_PROTO[0]}"
+    fi
 fi
-
-echo -e "\033[36m📍 发现可用出口 IP，请选择要注册与养护的锚点:\033[0m"
-echo "  1) 🤖 智能默认 (推荐，首选可用IP: ${DEFAULT_IP:-获取失败})"
-[[ -n "$DETECT_V4" ]] && echo "  2) 🌐 强制锁定 IPv4 ($DETECT_V4)"
-[[ -n "$DETECT_V6" ]] && echo "  3) 🌌 强制锁定 IPv6 ($DETECT_V6)"
-echo "  4) ✍️ 手动指定 (适合站群机，手动输入特定 IP)"
-
-read -p "请输入选择 (默认1): " IP_CHOICE
-case "${IP_CHOICE:-1}" in
-    2) PUBLIC_IP="$DETECT_V4"; IP_PREF="4" ;;
-    3) PUBLIC_IP="$DETECT_V6"; IP_PREF="6" ;;
-    4) 
-       read -p "请输入您要绑定的公网 IP (v4 或 v6): " PUBLIC_IP
-       [[ "$PUBLIC_IP" == *":"* ]] && IP_PREF="6" || IP_PREF="4"
-       ;;
-    *) PUBLIC_IP="$DEFAULT_IP" ;;
-esac
 
 # 终极修复：为 IPv6 自动穿上防护装甲（方括号），解决 Master 拼接 URL 报错问题
 if [[ "$PUBLIC_IP" == *":"* ]] && [[ "$PUBLIC_IP" != *"["* ]]; then
