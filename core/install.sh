@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # ==========================================================
-# 脚本名称: install.sh (IP-Sentinel 分布式边缘节点部署脚本 V6.0)
-# 核心功能: 区域选择、模块按需开启(Feature Flag)、配置生成与双重守护
+# 脚本名称: install.sh (IP-Sentinel 分布式边缘节点部署脚本 v2.1.0)
+# 核心功能: 区域选择、模块按需开启、官方机器人一键配置
 # ==========================================================
 
-# 你的专属 Forgejo 仓库 Raw 数据直链前缀
-REPO_RAW_URL="https://git.94211762.xyz/hotyue/IP-Sentinel/raw/branch/main"
+# 你的 GitHub 仓库 Raw 数据直链前缀
+REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/main"
 INSTALL_DIR="/opt/ip_sentinel"
 CONFIG_FILE="${INSTALL_DIR}/config.conf"
 
@@ -77,9 +77,23 @@ TG_TOKEN=""
 CHAT_ID=""
 AGENT_PORT="9527"
 if [[ "$TG_CHOICE" =~ ^[Yy]$ ]]; then
-    read -p "请输入 Telegram Bot Token (与主控一致): " TG_TOKEN
+    echo -e "\n\033[33m💡 提示：您可以选择使用自己的机器人，或者直接回车使用官方公共机器人。\033[0m"
+    echo -e "\033[33m⚠️  注意：若使用官方机器人，请务必先在 TG 中关注 @OmniBeacon_bot 并发送 /start\033[0m"
+    
+    read -p "请输入您的 Telegram Bot Token (回车使用官方默认): " USER_TOKEN
+    
+    if [ -z "$USER_TOKEN" ]; then
+        TG_TOKEN="8733029779:AAErXnFw45NCWZl4ylKQX-0OIC9SA_4XifM"
+        echo -e "\033[32m✅ 已自动配置官方机器人 (@OmniBeacon_bot)。\033[0m"
+        echo -e "\033[33m👉 请确保您已关注官方机器人并发送过 /start，否则将无法接收消息。\033[0m"
+    else
+        TG_TOKEN="$USER_TOKEN"
+        echo -e "\033[32m✅ 已记录您的私有机器人 Token。\033[0m"
+    fi
+
+    echo -e "\033[33m💡 提示：如果您不知道自己的 Chat ID，可以关注 @userinfobot 获取。\033[0m"
     read -p "请输入你的 Chat ID (与主控一致): " CHAT_ID
-    read -p "请输入本机用于接收指令的 Webhook 端口 (默认 9527，请确保防火墙已放开此端口): " INPUT_PORT
+    read -p "请输入本机用于接收指令的 Webhook 端口 (默认 9527): " INPUT_PORT
     [ -n "$INPUT_PORT" ] && AGENT_PORT="$INPUT_PORT"
 fi
 
@@ -167,6 +181,34 @@ fi
 
 crontab /tmp/cron_backup
 rm -f /tmp/cron_backup
+
+if [[ -n "$TG_TOKEN" ]] && [[ -n "$CHAT_ID" ]]; then
+    echo -e "\n📡 正在向指挥部发送注册暗号..."
+    
+    # 获取公网 IP
+    PUBLIC_IP=$(curl -s https://api64.ipify.org || curl -s https://ifconfig.me || echo "未知IP")
+    
+    # 构造注册暗号
+    REG_MSG="#REGISTER#:${REGION_NAME}:${PUBLIC_IP}:${AGENT_PORT}"
+    
+    # 执行主动推送
+    PUSH_RESULT=$(curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+        -d "chat_id=${CHAT_ID}" \
+        -d "parse_mode=Markdown" \
+        -d "text=✨ *IP-Sentinel 部署成功！*
+📍 区域：${REGION_NAME}
+🌐 IP：${PUBLIC_IP}
+🔌 端口：${AGENT_PORT}
+
+🔑 *请点击下方指令复制并回复给机器人：*
+\`${REG_MSG}\`")
+
+    if echo "$PUSH_RESULT" | grep -q '"ok":true'; then
+        echo -e "\033[32m✅ 注册信息已推送到您的 Telegram，请按指令完成最终激活！\033[0m"
+    else
+        echo -e "\033[31m❌ 消息推送失败，请检查 Chat ID 是否正确或是否已关注机器人。\033[0m"
+    fi
+fi
 
 echo "========================================================"
 echo "🎉 边缘节点 (Agent) 部署流程彻底完成！"
