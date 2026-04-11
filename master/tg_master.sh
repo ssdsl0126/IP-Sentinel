@@ -9,7 +9,7 @@ CONF="/opt/ip_sentinel_master/master.conf"
 [ ! -f "$CONF" ] && exit 1
 source "$CONF"
 
-OFFSET_FILE="/tmp/tg_master_offset"
+OFFSET_FILE="${MASTER_DIR}/.tg_offset"
 [[ -f $OFFSET_FILE ]] || echo "0" > $OFFSET_FILE
 
 # --- 工具函数 ---
