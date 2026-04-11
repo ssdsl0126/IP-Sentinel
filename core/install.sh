@@ -51,6 +51,27 @@ if [ "$ACTION_CHOICE" == "2" ]; then
     exit 0
 fi
 
+# ================== [v3.1.1 新增: 安装前环境纯净度清理 (严格保留日志)] ==================
+echo -e "\n⏳ 正在清理旧版守护进程与冗余任务 (保留历史日志)..."
+# 1. 强制超度可能存活的 Webhook 及各类看门狗进程，释放端口
+pkill -9 -f "webhook.py" >/dev/null 2>&1 || true
+pkill -9 -f "agent_daemon.sh" >/dev/null 2>&1 || true
+pkill -9 -f "runner.sh" >/dev/null 2>&1 || true
+
+# 2. 清除系统定时任务 (Cron) 中的旧版条目
+if crontab -l >/dev/null 2>&1; then
+    crontab -l | grep -v "ip_sentinel" > /tmp/cron_clean
+    crontab /tmp/cron_clean
+    rm -f /tmp/cron_clean
+fi
+
+# 3. 抹除旧版核心代码与配置文件，杜绝代码冲突 (精准避开 logs 目录)
+if [ -d "$INSTALL_DIR" ]; then
+    rm -rf "${INSTALL_DIR}/core" "${INSTALL_DIR}/data" "${INSTALL_DIR}/config.conf" "${INSTALL_DIR}/.last_ip" 2>/dev/null
+fi
+echo -e "\033[32m✅ 环境清理完毕，幽灵进程已肃清！\033[0m"
+# ========================================================================================
+
 # 📍 动态一级菜单：国家选择
 echo -e "\n\033[36m📍 【第一级】请选择目标国家/地区:\033[0m"
 jq -r '.countries[] | "\(.id)|\(.name)|\(.keyword_file)"' /tmp/map.json > /tmp/countries.txt
