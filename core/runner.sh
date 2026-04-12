@@ -28,10 +28,14 @@ export -f log
 export CONFIG_FILE INSTALL_DIR
 
 # 3. 防僵尸网络特征 (Cron Jitter) - 核心隐蔽逻辑
-# 配合每 30 分钟的调度周期，将随机休眠控制在 0 到 180 秒 (3分钟) 内，彻底打散全球并发请求
-JITTER_TIME=$((RANDOM % 180))
-log "SYSTEM" "INFO" "主控引擎被 Cron 唤醒，进入防并发随机休眠状态: ${JITTER_TIME} 秒..."
-sleep $JITTER_TIME
+# 配合每 30 分钟的调度周期，将随机休眠控制在 0 到 180 秒内，彻底打散全球并发请求
+if [ -t 1 ]; then
+    log "SYSTEM" "INFO " "💻 检测到人工终端干预，跳过静默休眠，立即执行任务！"
+else
+    JITTER_TIME=$((RANDOM % 180))
+    log "SYSTEM" "INFO " "⏱️ 主控引擎由后台唤醒，进入防并发随机休眠状态: ${JITTER_TIME} 秒..."
+    sleep $JITTER_TIME
+fi
 
 # 4. 唤醒并读取功能开关，执行智能调度 (Feature Flag)
 log "SYSTEM" "INFO" "休眠结束，开始计算本轮任务轮盘..."
