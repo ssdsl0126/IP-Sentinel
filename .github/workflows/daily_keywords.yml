@@ -1,0 +1,49 @@
+name: Daily Trends Factory
+
+on:
+  schedule:
+    # 每天 UTC 18:00 运行 (北京时间凌晨 02:00)
+    - cron: '0 18 * * *'
+  workflow_dispatch: 
+
+permissions:
+  contents: write
+
+jobs:
+  update-trends:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Execute Trends Engine
+        run: python scripts/fetch_trends.py
+
+      - name: Commit and Force Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add data/keywords/
+          
+          if git diff --staged --quiet; then
+            echo "No changes, skipping."
+            exit 0
+          fi
+          
+          # 策略：如果上一次是机器人提交的，就直接覆盖它
+          LAST_AUTHOR=$(git log -1 --format='%an')
+          if [ "$LAST_AUTHOR" = "github-actions[bot]" ]; then
+            git commit --amend -m "chore(data): 🤖 自动机兵：刷新全战区热点词库 [v3.3.0 OTA]"
+          else
+            git commit -m "chore(data): 🤖 自动机兵：刷新全战区热点词库 [v3.3.0 OTA]"
+          fi
+          
+          git push --force origin main
