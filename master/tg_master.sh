@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================================
-# 脚本名称: tg_master.sh (Master 端调度枢纽 V3.0.4 动态签名版)
+# 脚本名称: tg_master.sh (Master 端调度枢纽 V3.3.2 动态签名版)
 # 核心功能: 监听 TG、操作 SQLite、Webhook 精准调度、403权限拦截、僵尸节点清理
 # ==========================================================
 
@@ -129,6 +129,7 @@ while true; do
                         case "$REGION_NAME" in
                             "US") FLAG="🇺🇸" ;; "JP") FLAG="🇯🇵" ;; "HK") FLAG="🇭🇰" ;;
                             "SG") FLAG="🇸🇬" ;; "UK"|"GB") FLAG="🇬🇧" ;; "DE") FLAG="🇩🇪" ;; "FR") FLAG="🇫🇷" ;;
+                            "CA") FLAG="🇨🇦" ;; "AU") FLAG="🇦🇺" ;; "KR") FLAG="🇰🇷" ;; "NL") FLAG="🇳🇱" ;; "BR") FLAG="🇧🇷" ;; "IN") FLAG="🇮🇳" ;; "TW") FLAG="🇹🇼" ;;
                         esac
                         BTNS="$BTNS[{\"text\":\"$FLAG $REGION_NAME ($NODE_COUNT 台)\",\"callback_data\":\"region:$REGION_NAME\"}],"
                     done <<< "$REGION_DATA"
@@ -190,8 +191,9 @@ while true; do
                             [ -z "$REGION_NAME" ] && REGION_NAME="UNKNOWN"
                             FLAG="🌐"
                             case "$REGION_NAME" in
-                                "US") FLAG="🇺🇸" ;; "JP") FLAG="🇯🇵" ;; "HK") FLAG="🇭🇰" ;;
-                                "SG") FLAG="🇸🇬" ;; "UK"|"GB") FLAG="🇬🇧" ;; "DE") FLAG="🇩🇪" ;; "FR") FLAG="🇫🇷" ;;
+                            "US") FLAG="🇺🇸" ;; "JP") FLAG="🇯🇵" ;; "HK") FLAG="🇭🇰" ;;
+                            "SG") FLAG="🇸🇬" ;; "UK"|"GB") FLAG="🇬🇧" ;; "DE") FLAG="🇩🇪" ;; "FR") FLAG="🇫🇷" ;;
+                            "CA") FLAG="🇨🇦" ;; "AU") FLAG="🇦🇺" ;; "KR") FLAG="🇰🇷" ;; "NL") FLAG="🇳🇱" ;; "BR") FLAG="🇧🇷" ;; "IN") FLAG="🇮🇳" ;; "TW") FLAG="🇹🇼" ;;
                             esac
                             BTNS="$BTNS[{\"text\":\"$FLAG $REGION_NAME ($NODE_COUNT 台)\",\"callback_data\":\"region:$REGION_NAME\"}],"
                         done <<< "$REGION_DATA"
