@@ -95,6 +95,41 @@ bash <(curl -sL https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main/cor
 ```
 3. **激活节点**：同上，将暗号转发给您自己的机器人即可。
 
+### 时间同步说明（重要）
+
+在 Master-Agent 模式下，**Master 与 Agent 必须保持系统时间同步**。  
+本项目的 Webhook 控制链路使用带时间戳的 HMAC 鉴权；如果两端时间差超过约 60 秒，Telegram 上点击按钮或下发指令时，Agent 可能无响应，并在 Webhook 返回：
+
+```text
+401 Unauthorized: Request Expired
+```
+
+建议在 Master 和所有 Agent 上确认：
+
+```bash
+date
+date +%s
+timedatectl status
+```
+
+如未开启自动时间同步，建议执行：
+
+```bash
+timedatectl set-ntp true
+systemctl restart systemd-timesyncd
+timedatectl status
+```
+
+若你的系统使用 `chrony`，也可以改用：
+
+```bash
+apt-get update
+apt-get install -y chrony
+systemctl enable chrony
+systemctl restart chrony
+chronyc tracking
+```
+
 ### ⚠️ 架构级热升级指引 (Upgrade to v3.4.0)
 
 得益于 **v3.4.0 全新引入的版本锚点与状态机路由**，系统升级现已变得极其智能化。
@@ -122,7 +157,7 @@ bash /opt/ip_sentinel/core/uninstall.sh
 *(注意：该分支仅作基础维护，不享受新功能迭代，请尽可能升级你的系统)*
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/hotyue/IP-Sentinel/legacy/core/install.sh)
+bash <(curl -sL https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/legacy/core/install.sh)
 ```
 
 📡 战术联络 (Community)
