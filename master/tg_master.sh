@@ -11,7 +11,7 @@ source "$CONF"
 
 # [v3.4.0 核心: 主控版本锚点与云通信地址]
 MASTER_VERSION="3.4.0"
-REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/main"
+REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
 
 OFFSET_FILE="${MASTER_DIR}/.tg_offset"
 [[ -f $OFFSET_FILE ]] || echo "0" > $OFFSET_FILE

@@ -1,6 +1,6 @@
 {
   "version": "3.1.0",
-  "updated_at": "2026-04-11",
+  "updated_at": "2026-04-15",
   "countries": [
     {
       "id": "US",
@@ -97,6 +97,20 @@
           "name": "Default State",
           "cities": [
             { "id": "HongKong", "name": "Hong Kong (香港)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "KR",
+      "name": "South Korea (韩国)",
+      "keyword_file": "kw_KR.txt",
+      "states": [
+        {
+          "id": "Default",
+          "name": "Default State",
+          "cities": [
+            { "id": "Seoul", "name": "Seoul (首尔)" }
           ]
         }
       ]

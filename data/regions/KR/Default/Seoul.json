@@ -1,0 +1,20 @@
+{
+  "region_name": "South Korea - Seoul",
+  "google_module": {
+    "base_lat": 37.5665,
+    "base_lon": 126.9780,
+    "lang_params": "hl=ko&gl=KR",
+    "valid_url_suffix": "com"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://www.naver.com/",
+      "https://www.daum.net/",
+      "https://www.coupang.com/",
+      "https://www.yna.co.kr/",
+      "https://ko.wikipedia.org/wiki/Special:Random",
+      "https://map.naver.com/",
+      "https://www.korea.net/"
+    ]
+  }
+}
