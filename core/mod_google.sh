@@ -73,16 +73,24 @@ normalize_play_region() {
 probe_google_play_region() {
     local html region
 
-    # RegionRestrictionCheck uses the Play Store landing page as a more stable
-    # region signal than Google Search domain redirects alone.
-    html=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -sL 'https://play.google.com/' \
-        -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8' \
+    # Mirror the more battle-tested RegionRestrictionCheck request as closely
+    # as possible to keep Play Store region extraction stable.
+    html=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF --max-time 10 --retry 3 --retry-max-time 20 -sL 'https://play.google.com/' \
+        -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' \
         -H 'accept-language: en-US;q=0.9' \
+        -H 'priority: u=0, i' \
+        -H 'sec-ch-ua: "Chromium";v="131", "Not_A Brand";v="24", "Google Chrome";v="131"' \
+        -H 'sec-ch-ua-mobile: ?0' \
+        -H 'sec-ch-ua-platform: "Windows"' \
+        -H 'sec-fetch-dest: document' \
+        -H 'sec-fetch-mode: navigate' \
+        -H 'sec-fetch-site: none' \
+        -H 'sec-fetch-user: ?1' \
         -H 'upgrade-insecure-requests: 1' \
         -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' \
         2>/dev/null)
 
-    region=$(printf '%s' "$html" | tr '\n' ' ' | grep -o '<div class="yVZQTb">[^<]*</div>' | head -n 1 | sed 's#<div class="yVZQTb">##; s#</div>##')
+    region=$(printf '%s' "$html" | grep -oP '<div class="yVZQTb">\K[^<(]+' | head -n 1)
     echo "$region"
 }
 
@@ -173,6 +181,11 @@ fi
 TARGET_COUNTRY=$(normalize_country_code "$REGION_CODE")
 PLAY_REGION_RAW=$(probe_google_play_region)
 PLAY_COUNTRY=$(normalize_country_code "$(normalize_play_region "$PLAY_REGION_RAW")")
+if [ -n "$PLAY_REGION_RAW" ]; then
+    log "$MODULE_NAME" "INFO " "Google Play Store region probe: ${PLAY_REGION_RAW} (${PLAY_COUNTRY:-unknown})"
+else
+    log "$MODULE_NAME" "WARN " "Google Play Store region probe returned no parsable region."
+fi
 
 PROBE_KEY=${KEYWORDS[$RANDOM % ${#KEYWORDS[@]}]}
 PROBE_QUERY=$(echo "$PROBE_KEY" | jq -sRr @uri)
