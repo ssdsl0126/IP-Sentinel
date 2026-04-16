@@ -10,8 +10,6 @@ TARGET_VERSION="3.4.0"
 
 # 你的 GitHub 仓库 Raw 数据直链前缀
 REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
-# 临时改为私库地址用于测试
-# REPO_RAW_URL="https://git.94211762.xyz/ssdsl0126/IP-Sentinel/raw/branch/main"
 
 MASTER_DIR="/opt/ip_sentinel_master"
 DB_FILE="${MASTER_DIR}/sentinel.db"
@@ -163,13 +161,3 @@ fi
 echo "========================================================"
 # =================================================================
 
-# ================== [v3.1.2 新增: 玻璃房透明装机统计] ==================
-echo -e "\n📡 正在向开源社区汇报装机量 (完全匿名，不收集IP)..."
-MASTER_COUNT=$(curl -s -m 3 "https://ip-sentinel-count.samanthaestime296.workers.dev/ping/master" || echo "")
-
-if [ -n "$MASTER_COUNT" ] && [[ "$MASTER_COUNT" =~ ^[0-9]+$ ]]; then
-    echo -e "\033[32m✅ 感谢您成为全球第 ${MASTER_COUNT} 名 IP-Sentinel 指挥官！\033[0m"
-else
-    echo -e "\033[32m✅ 感谢您建立 IP-Sentinel 司令部！\033[0m"
-fi
-echo -e "\n"
