@@ -211,16 +211,8 @@ if [ -n "$PLAY_COUNTRY" ]; then
     else
         STATUS="⚠️ Region still mismatched (Google Play Store: ${PLAY_REGION_RAW} | Target: ${TARGET_COUNTRY} | Google domain: ${ACTUAL_SUFFIX})"
     fi
-elif [ "$PROBE_CODE" == "000" ] || [ -z "$FINAL_URL" ]; then
-    STATUS="🚨 Probe failed: neither Google Search nor Google Play returned a usable region signal"
-elif [ "$ACTUAL_SUFFIX" == "com.hk" ] && [ "$TARGET_COUNTRY" != "HK" ]; then
-    STATUS="❌ Severe drift: Google Search still jumps into Hong Kong (${ACTUAL_SUFFIX}) instead of the target region"
-elif [ "$ACTUAL_SUFFIX" == "$VALID_URL_SUFFIX" ] && [ "$VALID_URL_SUFFIX" != "com" ]; then
-    STATUS="✅ Target region reached (domain anchor: ${ACTUAL_SUFFIX} | Play Store did not return a region)"
-elif [ "$ACTUAL_SUFFIX" == "com" ]; then
-    STATUS="⚠️ Inconclusive: Google only stayed on generic .com and Play Store did not return a region"
 else
-    STATUS="⚠️ Cross-region drift detected (Google domain: ${ACTUAL_SUFFIX} | Play Store did not return a region)"
+    STATUS="🚨 Probe failed: Google Play Store did not return a usable region signal (Google domain debug: ${ACTUAL_SUFFIX})"
 fi
 
 log "$MODULE_NAME" "SCORE" "Self-check result: $STATUS"
