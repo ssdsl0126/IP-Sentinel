@@ -2,7 +2,9 @@
 
 ![Agent Installs](https://img.shields.io/endpoint?url=https://ip-sentinel-count.samanthaestime296.workers.dev/stats/agent)
 ![Master Commands](https://img.shields.io/endpoint?url=https://ip-sentinel-count.samanthaestime296.workers.dev/stats/master)
-![License](https://img.shields.io/github/license/hotyue/IP-Sentinel)
+![License](https://img.shields.io/github/license/ssdsl0126/IP-Sentinel)
+
+> Security note: this fork is self-hosted only. Use your own Master and your own Telegram Bot; public gateway mode should not be used.
 
 > **一个极度轻量、零感知、支持中枢遥控的 VPS IP 自动化养护与区域纠偏引擎。**
 
@@ -32,7 +34,7 @@
 
  - 🔄 **平滑热更新装甲 (Smooth Upgrade Engine)**：v3.2.2 体验进化。全系植入状态机嗅探逻辑。无论是 Master 司令部还是 Agent 边缘节点，再次执行部署脚本时将自动识别并继承历史配置、SQLite 数据库与锚定 IP，一键回车即可瞬间完成无损换代，告别繁琐的重复配置。
  
- - ☁️ **云端中枢 (Public Master)**：引入官方公共机器人 @OmniBeacon_bot，新手无需部署 Master 司令部，部署 Agent 时一键回车即可调用官方加密网关，30 秒极速入伍！
+ - Self-hosted only: use your own Master and your own Telegram Bot. Public gateway mode has been removed for security hardening.
 
  - 🧠 **分布式中枢 (Master-Agent)**：对于硬核极客，支持私有化部署。一台 Master 主控集成 SQLite 数据库，统管无数台 Agent 边缘节点，确保数据绝对私有。
 
@@ -69,11 +71,11 @@
 
 v3.4.x 提供了两种接入模式，请根据您的战术需求选择：
 
-### 🔹 模式 A：官方公共模式 (最简、推荐)
-**适合不想折腾、只想快速养护 IP 的新兵。**
+### Mode A: Self-hosted Agent Install
+**Use this mode when you want a single Agent linked to your own Telegram Bot.**
 
-1. **关注机器人**：在 TG 中关注 [@OmniBeacon_bot](https://t.me/OmniBeacon_bot) 并发送 `/start`。
-2. **部署 Agent**：在目标 VPS 上执行以下指令，安装过程中**直接回车**使用官方机器人，并输入您的 Chat ID：
+1. **Configure your own Telegram Bot**: use a private bot and private chat under your own control.
+2. **Install Agent**: run the installer below and provide your own Telegram Bot Token and Chat ID during setup.
 ```Bash
 bash <(curl -sL https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main/core/install.sh)
 
@@ -176,4 +178,4 @@ bash <(curl -sL https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/legacy/c
 本项目仅供网络原理研究、个人 VPS 维护学习使用。请遵守当地法律法规及目标服务商的 TOS（服务条款），切勿用于恶意高频请求或任何非法用途。使用者需自行承担因不当使用造成的 IP 封禁或其他相关风险。
 
 ## Stargazers over time
-[![Stargazers over time](https://starchart.cc/hotyue/IP-Sentinel.svg?variant=adaptive)](https://starchart.cc/hotyue/IP-Sentinel)
+[![Stargazers over time](https://starchart.cc/ssdsl0126/IP-Sentinel.svg?variant=adaptive)](https://starchart.cc/ssdsl0126/IP-Sentinel)

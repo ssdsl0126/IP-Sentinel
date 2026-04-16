@@ -209,16 +209,17 @@ if [ "$UPGRADE_MODE" == "false" ]; then
     CHAT_ID=""
     AGENT_PORT="9527"
     if [[ "$TG_CHOICE" =~ ^[Yy]$ ]]; then
-        echo -e "\n\033[33m💡 提示：您可以选择使用自己的机器人，或者直接回车使用官方公共机器人。\033[0m"
-        echo -e "\033[33m⚠️  注意：若使用官方机器人，请务必先在 TG 中关注 @OmniBeacon_bot 并发送 /start\033[0m"
+        echo -e "\n\033[33mSecurity note: self-hosted mode only. Use your own Telegram Bot token for Master connectivity.\033[0m"
+        echo -e "\033[33mSecurity note: use your own Telegram Bot token only. Public gateway mode has been removed.\033[0m"
         
-        read -p "请输入您的 Telegram Bot Token (回车使用官方默认): " USER_TOKEN
+        read -p "Telegram Bot Token: " USER_TOKEN
         
+
         if [ -z "$USER_TOKEN" ]; then
-            TG_TOKEN="OFFICIAL_GATEWAY_MODE" 
-            TG_API_URL="https://omni-gateway.samanthaestime296.workers.dev" 
-            echo -e "\033[32m✅ 已自动连接官方安全网关 (@OmniBeacon_bot)。\033[0m"
-            echo -e "\033[33m👉 请确保您已关注官方机器人并发送过 /start，否则将无法接收消息。\033[0m"
+            echo -e "\033[31mERROR: Telegram Bot Token is required. Public gateway mode has been disabled.\033[0m"
+            exit 1
+
+
         else
             TG_TOKEN="$USER_TOKEN"
             TG_API_URL="https://api.telegram.org/bot${TG_TOKEN}/sendMessage"
