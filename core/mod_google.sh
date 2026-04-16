@@ -103,10 +103,20 @@ fi
 SESSION_BASE_LAT=$(get_random_coord "$BASE_LAT" 270)
 SESSION_BASE_LON=$(get_random_coord "$BASE_LON" 270)
 TOTAL_ACTIONS=$((6 + RANDOM % 5))
+QUICK_TEST="${QUICK_TEST:-0}"
+VERIFY_ONLY="${VERIFY_ONLY:-0}"
 
 log "$MODULE_NAME" "INFO " "Current outbound IP: $CURRENT_IP"
 log "$MODULE_NAME" "INFO " "Pinned session UA: ${SESSION_UA:0:45}..."
 log "$MODULE_NAME" "INFO " "Session anchor coordinate: $SESSION_BASE_LAT, $SESSION_BASE_LON"
+
+if [ "$VERIFY_ONLY" = "1" ]; then
+    TOTAL_ACTIONS=0
+    log "$MODULE_NAME" "INFO " "Verify-only mode enabled: skipping behavior simulation and running probes only."
+elif [ "$QUICK_TEST" = "1" ]; then
+    TOTAL_ACTIONS=1
+    log "$MODULE_NAME" "INFO " "Quick-test mode enabled: running one action and skipping dwell sleeps."
+fi
 
 CURL_BIND_OPT=""
 DYNAMIC_IP_PREF="-${IP_PREF:-4}"
@@ -122,41 +132,43 @@ if [[ -n "$BIND_IP" && "$BIND_IP" =~ ^[0-9a-fA-F:\.]+$ ]]; then
     fi
 fi
 
-for ((i=1; i<=TOTAL_ACTIONS; i++)); do
-    ACTION_LAT=$(get_random_coord "$SESSION_BASE_LAT" 1)
-    ACTION_LON=$(get_random_coord "$SESSION_BASE_LON" 1)
+if [ "$TOTAL_ACTIONS" -gt 0 ]; then
+    for ((i=1; i<=TOTAL_ACTIONS; i++)); do
+        ACTION_LAT=$(get_random_coord "$SESSION_BASE_LAT" 1)
+        ACTION_LON=$(get_random_coord "$SESSION_BASE_LON" 1)
 
-    RAND_KEY=${KEYWORDS[$RANDOM % ${#KEYWORDS[@]}]}
-    ENCODED_KEY=$(echo "$RAND_KEY" | jq -sRr @uri)
-    ACTION_TYPE=$((1 + RANDOM % 4))
+        RAND_KEY=${KEYWORDS[$RANDOM % ${#KEYWORDS[@]}]}
+        ENCODED_KEY=$(echo "$RAND_KEY" | jq -sRr @uri)
+        ACTION_TYPE=$((1 + RANDOM % 4))
 
-    case $ACTION_TYPE in
-        1)
-            CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -L -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
-                "https://www.google.com/search?q=${ENCODED_KEY}&${LANG_PARAMS}")
-            ;;
-        2)
-            CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -L -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
-                "https://news.google.com/home?${LANG_PARAMS}")
-            ;;
-        3)
-            CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
-                "https://www.google.com/maps/search/${ENCODED_KEY}/@${ACTION_LAT},${ACTION_LON},17z?${LANG_PARAMS}")
-            ;;
-        4)
-            CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
-                "https://connectivitycheck.gstatic.com/generate_204")
-            ;;
-    esac
+        case $ACTION_TYPE in
+            1)
+                CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -L -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
+                    "https://www.google.com/search?q=${ENCODED_KEY}&${LANG_PARAMS}")
+                ;;
+            2)
+                CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -L -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
+                    "https://news.google.com/home?${LANG_PARAMS}")
+                ;;
+            3)
+                CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
+                    "https://www.google.com/maps/search/${ENCODED_KEY}/@${ACTION_LAT},${ACTION_LON},17z?${LANG_PARAMS}")
+                ;;
+            4)
+                CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
+                    "https://connectivitycheck.gstatic.com/generate_204")
+                ;;
+        esac
 
-    log "$MODULE_NAME" "EXEC " "Action [$i/$TOTAL_ACTIONS] finished | HTTP $CODE | Coordinate: $ACTION_LAT, $ACTION_LON"
+        log "$MODULE_NAME" "EXEC " "Action [$i/$TOTAL_ACTIONS] finished | HTTP $CODE | Coordinate: $ACTION_LAT, $ACTION_LON"
 
-    if [ $i -lt $TOTAL_ACTIONS ]; then
-        SLEEP_TIME=$((90 + RANDOM % 61))
-        log "$MODULE_NAME" "WAIT " "Reading page content, sleeping ${SLEEP_TIME}s..."
-        sleep "$SLEEP_TIME"
-    fi
-done
+        if [ "$QUICK_TEST" != "1" ] && [ $i -lt $TOTAL_ACTIONS ]; then
+            SLEEP_TIME=$((90 + RANDOM % 61))
+            log "$MODULE_NAME" "WAIT " "Reading page content, sleeping ${SLEEP_TIME}s..."
+            sleep "$SLEEP_TIME"
+        fi
+    done
+fi
 
 TARGET_COUNTRY=$(normalize_country_code "$REGION_CODE")
 PLAY_REGION_RAW=$(probe_google_play_region)
