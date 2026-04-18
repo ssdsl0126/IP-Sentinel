@@ -1,116 +1,188 @@
 {
-  "version": "3.1.0",
-  "updated_at": "2026-04-15",
-  "countries": [
+  "version": "3.5.2",
+  "updated_at": "2026-04-18",
+  "continents": [
     {
-      "id": "US",
-      "name": "United States (美国)",
-      "keyword_file": "kw_US.txt",
-      "states": [
+      "id": "ASIA",
+      "name": "亚太战区 (Asia-Pacific)",
+      "countries": [
+        {
+          "id": "JP",
+          "name": "Japan (日本)",
+          "keyword_file": "kw_JP.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Tokyo", "name": "Tokyo (东京)" } ] }
+          ]
+        },
+        {
+          "id": "SG",
+          "name": "Singapore (新加坡)",
+          "keyword_file": "kw_SG.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Singapore", "name": "Singapore (新加坡)" } ] }
+          ]
+        },
+        {
+          "id": "HK",
+          "name": "Hong Kong (香港)",
+          "keyword_file": "kw_HK.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "HongKong", "name": "Hong Kong (香港)" } ] }
+          ]
+        },
+        {
+          "id": "KR",
+          "name": "South Korea (韩国)",
+          "keyword_file": "kw_KR.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Seoul", "name": "Seoul (首尔)" } ] }
+          ]
+        },
+        {
+          "id": "VN",
+          "name": "Vietnam (越南)",
+          "keyword_file": "kw_VN.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Hanoi", "name": "Hanoi (河内)" } ] }
+          ]
+        },
+        {
+          "id": "TW",
+          "name": "Taiwan (台湾)",
+          "keyword_file": "kw_TW.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Taipei", "name": "Taipei (台北)" } ] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EUROPE",
+      "name": "欧洲战区 (Europe)",
+      "countries": [
+        {
+          "id": "UK",
+          "name": "United Kingdom (英国)",
+          "keyword_file": "kw_UK.txt",
+          "states": [
+            {
+              "id": "Default",
+              "name": "Default State",
+              "cities": [
+                { "id": "London", "name": "London (伦敦)" },
+                { "id": "Coventry", "name": "Coventry (考文垂)" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "DE",
+          "name": "Germany (德国)",
+          "keyword_file": "kw_DE.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Frankfurt", "name": "Frankfurt (法兰克福)" } ] }
+          ]
+        },
+        {
+          "id": "FR",
+          "name": "France (法国)",
+          "keyword_file": "kw_FR.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Paris", "name": "Paris (巴黎)" } ] }
+          ]
+        },
+        {
+          "id": "NL",
+          "name": "Netherlands (荷兰)",
+          "keyword_file": "kw_NL.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Amsterdam", "name": "Amsterdam (阿姆斯特丹)" } ] }
+          ]
+        },
+        {
+          "id": "ES",
+          "name": "Spain (西班牙)",
+          "keyword_file": "kw_ES.txt",
+          "states": [
+            { "id": "Default", "name": "Default State", "cities": [ { "id": "Madrid", "name": "Madrid (马德里)" } ] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "AMERICAS",
+      "name": "美洲战区 (Americas)",
+      "countries": [
+        {
+          "id": "US",
+          "name": "United States (美国)",
+          "keyword_file": "kw_US.txt",
+          "states": [
+            {
+              "id": "CA",
+              "name": "California (加州)",
+              "cities": [
+                { "id": "Los_Angeles", "name": "Los Angeles (洛杉矶)" },
+                { "id": "San_Jose", "name": "San Jose (圣何塞)" }
+              ]
+            },
+            {
+              "id": "IL",
+              "name": "Illinois (伊利诺伊州)",
+              "cities": [
+                { "id": "Warrenville", "name": "Warrenville (沃伦维尔)" }
+              ]
+            },
+            {
+              "id": "NC",
+              "name": "North Carolina (北卡罗来纳州)",
+              "cities": [
+                { "id": "Charlotte", "name": "Charlotte (夏洛特)" }
+              ]
+            },
+            {
+              "id": "NV",
+              "name": "Nevada (内华达州)",
+              "cities": [
+                { "id": "Las_Vegas", "name": "Las Vegas (拉斯维加斯)" }
+              ]
+            },
+            {
+              "id": "OR",
+              "name": "Oregon (俄勒冈州)",
+              "cities": [
+                { "id": "Bend", "name": "Bend (本德)" }
+              ]
+            },
+            {
+              "id": "UT",
+              "name": "Utah (犹他州)",
+              "cities": [
+                { "id": "Salt_Lake_City", "name": "Salt Lake City (盐湖城)" }
+              ]
+            },
+            {
+              "id": "WA",
+              "name": "Washington (华盛顿州)",
+              "cities": [
+                { "id": "Seattle", "name": "Seattle (西雅图)" }
+              ]
+            }
+          ]
+        },
         {
           "id": "CA",
-          "name": "California (加州)",
-          "cities": [
-            { "id": "Los_Angeles", "name": "Los Angeles (洛杉矶)" },
-            { "id": "San_Jose", "name": "San Jose (圣何塞)" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "JP",
-      "name": "Japan (日本)",
-      "keyword_file": "kw_JP.txt",
-      "states": [
-        {
-          "id": "Default",
-          "name": "Default State",
-          "cities": [
-            { "id": "Tokyo", "name": "Tokyo (东京)" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "UK",
-      "name": "United Kingdom (英国)",
-      "keyword_file": "kw_UK.txt",
-      "states": [
-        {
-          "id": "Default",
-          "name": "Default State",
-          "cities": [
-            { "id": "London", "name": "London (伦敦)" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "DE",
-      "name": "Germany (德国)",
-      "keyword_file": "kw_DE.txt",
-      "states": [
-        {
-          "id": "Default",
-          "name": "Default State",
-          "cities": [
-            { "id": "Frankfurt", "name": "Frankfurt (法兰克福)" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "FR",
-      "name": "France (法国)",
-      "keyword_file": "kw_FR.txt",
-      "states": [
-        {
-          "id": "Default",
-          "name": "Default State",
-          "cities": [
-            { "id": "Paris", "name": "Paris (巴黎)" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "SG",
-      "name": "Singapore (新加坡)",
-      "keyword_file": "kw_SG.txt",
-      "states": [
-        {
-          "id": "Default",
-          "name": "Default State",
-          "cities": [
-            { "id": "Singapore", "name": "Singapore (新加坡)" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "HK",
-      "name": "Hong Kong (香港)",
-      "keyword_file": "kw_HK.txt",
-      "states": [
-        {
-          "id": "Default",
-          "name": "Default State",
-          "cities": [
-            { "id": "HongKong", "name": "Hong Kong (香港)" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "KR",
-      "name": "South Korea (韩国)",
-      "keyword_file": "kw_KR.txt",
-      "states": [
-        {
-          "id": "Default",
-          "name": "Default State",
-          "cities": [
-            { "id": "Seoul", "name": "Seoul (首尔)" }
+          "name": "Canada (加拿大)",
+          "keyword_file": "kw_CA.txt",
+          "states": [
+            {
+              "id": "Default",
+              "name": "Default State",
+              "cities": [
+                { "id": "Toronto", "name": "Toronto (多伦多)" },
+                { "id": "Montreal", "name": "Montreal (蒙特利尔)" }
+              ]
+            }
           ]
         }
       ]

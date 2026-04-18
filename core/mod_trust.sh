@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================================
-# 脚本名称: mod_trust.sh (IP 信用净化模块 v3.4.0 版本锚点版)
+# 脚本名称: mod_trust.sh (IP 信用净化模块 - 动态锚点版)
 # 核心功能: 动态扫描本地 LBS 冷数据，提取权威白名单，执行流量净化
 # ==========================================================
 
@@ -22,11 +22,9 @@ LOG_FILE="${INSTALL_DIR}/logs/sentinel.log"
 # 利用 find 穿透多级子目录，自动抓取安装时落地的那份专属 json 文件
 REGION_JSON_FILE=$(find "${INSTALL_DIR}/data/regions" -name "*.json" 2>/dev/null | head -n 1)
 
-# 兼容旧节点兜底：如果本地真没找到 json，回退到拉取云端通用大区配置
+# 兼容兜底：如果本地没找到 json，则直接使用默认白名单
 if [ -z "$REGION_JSON_FILE" ] || [ ! -f "$REGION_JSON_FILE" ]; then
-    REGION_JSON_FILE="${INSTALL_DIR}/data/regions/${REGION}.json"
-    mkdir -p "${INSTALL_DIR}/data/regions"
-    curl -${IP_PREF:-4} -sL "${REPO_RAW_URL}/data/regions/${REGION}.json" -o "$REGION_JSON_FILE"
+    REGION_JSON_FILE=""
 fi
 
 # 使用 jq 将 json 中的网址数组安全地读入 Bash 数组

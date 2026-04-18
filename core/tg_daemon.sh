@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # ==========================================================
-# 脚本名称: tg_daemon.sh (Telegram 互动监听守护进程)
-# 核心功能: 极低功耗长轮询监听 TG 指令，实现远程控制
+# 脚本名称: tg_daemon.sh (Telegram 互动监听守护进程 - 动态锚点版)
+# 核心功能: 极低功耗长轮询监听、节点溯源、版本继承
 # ==========================================================
 
 INSTALL_DIR="/opt/ip_sentinel"
@@ -15,6 +15,11 @@ source "$CONFIG_FILE"
 
 # 如果没有配置 TG 机器人，则安静退出守护进程
 [ -z "$TG_TOKEN" ] || [ -z "$CHAT_ID" ] && exit 0
+
+# [核心: 动态版本锚点与防撞甲身份载入]
+LOCAL_VER="${AGENT_VERSION:-未知}"
+IP_HASH=$(echo "${PUBLIC_IP:-127.0.0.1}" | md5sum | cut -c 1-4 | tr 'a-z' 'A-Z')
+NODE_NAME="$(hostname | cut -c 1-10)-${IP_HASH}"
 
 # 2. 初始化消息偏移量 (Offset) 记录文件，防止重启后重复处理老消息
 OFFSET=0
@@ -44,20 +49,20 @@ while true; do
             if [ "$MSG_CHAT_ID" == "$CHAT_ID" ]; then
                 case "$MSG_TEXT" in
                     "/run")
-                        send_msg "🚀 **[指令下达]** 正在后台立即触发 IP 养护任务..."
+                        send_msg "🚀 **[${NODE_NAME}]** 正在后台触发 IP 养护任务 (v${LOCAL_VER})..."
                         # 使用 nohup 另起后台独立进程运行，防止阻塞当前监听器的循环
                         nohup bash "${INSTALL_DIR}/core/mod_google.sh" >/dev/null 2>&1 &
                         ;;
                     "/log")
                         LOG_DATA=$(tail -n 15 "${INSTALL_DIR}/logs/sentinel.log")
-                        send_msg "📄 **[最近 15 行系统日志]**%0A\`\`\`log%0A${LOG_DATA}%0A\`\`\`"
+                        send_msg "📄 **[${NODE_NAME}] 实时日志 (v${LOCAL_VER}):**%0A\`\`\`log%0A${LOG_DATA}%0A\`\`\`"
                         ;;
                     "/report")
                         # 触发生成一次战报
                         bash "${INSTALL_DIR}/core/tg_report.sh"
                         ;;
                     "/help"|"/start")
-                        HELP_MSG="🛡️ **IP-Sentinel 控制台**%0A/run - 立刻执行一次养护%0A/log - 抓取最新运行日志%0A/report - 手动生成统计简报"
+                        HELP_MSG="🛡️ **IP-Sentinel 边缘控制台**%0A📍 节点: \`${NODE_NAME}\`%0A🔖 版本: \`v${LOCAL_VER}\`%0A%0A/run - 立刻执行一次养护%0A/log - 抓取最新运行日志%0A/report - 手动生成统计简报"
                         send_msg "$HELP_MSG"
                         ;;
                 esac

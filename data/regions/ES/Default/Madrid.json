@@ -1,0 +1,20 @@
+{
+  "region_name": "Spain - Madrid",
+  "google_module": {
+    "base_lat": 40.4168,
+    "base_lon": -3.7038,
+    "lang_params": "hl=es&gl=ES",
+    "valid_url_suffix": "es"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://es.wikipedia.org/wiki/Especial:Aleatoria",
+      "https://www.elmundo.es/",
+      "https://www.elpais.com/",
+      "https://www.marca.com/",
+      "https://www.rtve.es/",
+      "https://www.zara.com/es/",
+      "https://www.elcorteingles.es/"
+    ]
+  }
+}

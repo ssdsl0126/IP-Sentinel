@@ -1,0 +1,20 @@
+{
+  "region_name": "Netherlands - Amsterdam",
+  "google_module": {
+    "base_lat": 52.3676,
+    "base_lon": 4.9041,
+    "lang_params": "hl=nl&gl=NL",
+    "valid_url_suffix": "nl"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://nl.wikipedia.org/wiki/Speciaal:Willekeurig",
+      "https://www.rijksoverheid.nl/",
+      "https://www.nos.nl/",
+      "https://www.bol.com/",
+      "https://www.nu.nl/",
+      "https://www.buienradar.nl/",
+      "https://www.telegraaf.nl/"
+    ]
+  }
+}

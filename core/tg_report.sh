@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # ==========================================================
-# 脚本名称: tg_report.sh (Telegram 每日战报模块 V3.4.0 动态拼装版)
-# 核心功能: 适配 Feature Flag 架构，按需展示 Google/Trust 独立统计数据
+# 脚本名称: tg_report.sh (Telegram 每日战报模块 - 动态锚点版)
+# 核心功能: 适配 Feature Flag 架构，按需展示独立统计数据，OTA 更新预警
 # ==========================================================
 
 INSTALL_DIR="/opt/ip_sentinel"
@@ -19,9 +19,12 @@ if [ -z "$TG_TOKEN" ] || [ -z "$CHAT_ID" ]; then
 fi
 
 # 2. 节点元数据抓取 (v3.2.2 协议自适应与多级容灾版)
-# [v3.3.2 修复: 引入 IP 哈希防同名覆盖机制]
-IP_HASH=$(echo "${PUBLIC_IP:-127.0.0.1}" | md5sum | cut -c 1-4 | tr 'a-z' 'A-Z')
-NODE_NAME="$(hostname | cut -c 1-10)-${IP_HASH}"
+# [v3.5.2 核心: 引入双轨身份架构]
+if [ -z "$NODE_NAME" ]; then
+    IP_HASH=$(echo "${PUBLIC_IP:-127.0.0.1}" | md5sum | cut -c 1-4 | tr 'a-z' 'A-Z')
+    NODE_NAME="$(hostname | tr -cd 'a-zA-Z0-9' | cut -c 1-10)-${IP_HASH}"
+fi
+NODE_ALIAS="${NODE_ALIAS:-$NODE_NAME}"
 
 # --- [防线 1: 底层路由锁定与协议自适应] ---
 CURL_BIND_OPT=""
@@ -79,21 +82,28 @@ fi
 case "$REGION_CODE" in
     "JP") FLAG="🇯🇵" ;;
     "US") FLAG="🇺🇸" ;;
+    "CA") FLAG="🇨🇦" ;;
     "DE") FLAG="🇩🇪" ;;
+    "ES") FLAG="🇪🇸" ;;
+    "FR") FLAG="🇫🇷" ;;
     "SG") FLAG="🇸🇬" ;;
     "HK") FLAG="🇭🇰" ;;
+    "KR") FLAG="🇰🇷" ;;
+    "NL") FLAG="🇳🇱" ;;
+    "TW") FLAG="🇹🇼" ;;
     "GB"|"UK") FLAG="🇬🇧" ;;
+    "VN") FLAG="🇻🇳" ;;
     *) FLAG="🌐" ;;
 esac
 
-# 3. 截取过去 24 小时的日志
-LOG_CONTENT=$(find "$LOG_FILE" -mtime -1 -exec cat {} \; 2>/dev/null)
+# 3. 截取过去 24 小时的日志 (每天48次轮询，保留最新 1000 行足以覆盖单日战报)
+LOG_CONTENT=$(tail -n 1000 "$LOG_FILE" 2>/dev/null)
 
 if [ -z "$LOG_CONTENT" ]; then
     read -r -d '' MSG <<EOT
 🛑 **[IP-Sentinel] 告警：节点异常**
 ----------------------------
-📍 **节点名称**: \`${NODE_NAME}\`
+📍 **节点名称**: \`${NODE_ALIAS}\`
 ⚠️ **警告**: 过去 24 小时无运行日志！
 🛠️ **建议**: 节点可能刚部署完毕，请在面板手动执行一次养护动作。
 EOT
@@ -111,7 +121,7 @@ else
     # 开始组装战报头部
     MSG="📊 **IP-Sentinel 每日简报 (${FLAG} ${REGION_NAME})**
 ----------------------------
-📍 **节点名称**: \`${NODE_NAME}\`
+📍 **节点名称**: \`${NODE_ALIAS}\`
 📡 **出口 IP**: \`${CURRENT_IP}\`
 🛡️ **IP 属性**: ${IP_TYPE}"
 
@@ -130,7 +140,7 @@ else
 
 🎯 **[Google 区域纠偏]**
 🚀 执行总数: ${G_TOTAL} 次 (胜率: **${G_RATE}%**)
-✅ 成功: ${G_SUCCESS} | ❌ 送中: ${G_FAILED} | ⚠️ 警告: ${G_WARN}"
+✅ 成功: ${G_SUCCESS} | ❌ 漂移: ${G_FAILED} | ⚠️ 警告: ${G_WARN}"
     fi
 
     # --- [分析块 2: IP 信用净化模块] ---
@@ -160,14 +170,14 @@ else
 fi
 
 # ==========================================
-# 5. [v3.4.0 新增] 云端版本探针与告警模块
+# 5. [核心: OTA 云端版本探针与告警模块]
 # ==========================================
 # 从配置文件提取当前本地版本，若无则默认为未知
 LOCAL_VER="${AGENT_VERSION:-未知}"
 
-# 极轻量级探针: 抓取 GitHub 云端的 version.txt (超时 3 秒)
+# 极轻量级探针: 抓取 GitHub 云端的 version.txt (超时 3 秒，KV解析法)
 REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
-REMOTE_VER=$(curl -s -m 3 "${REPO_RAW_URL}/version.txt" | tr -d '[:space:]')
+REMOTE_VER=$(curl -s -m 3 "${REPO_RAW_URL}/version.txt" | grep "^AGENT_VERSION=" | cut -d'=' -f2 | tr -d '[:space:]')
 
 # 构建底部引擎状态块
 MSG="$MSG
@@ -178,11 +188,11 @@ MSG="$MSG
 # 比对逻辑：如果成功抓到了远端版本，且和本地不一样
 if [ -n "$REMOTE_VER" ] && [ "$REMOTE_VER" != "$LOCAL_VER" ]; then
     MSG="$MSG
-最新官方版本: \`v${REMOTE_VER}\` (✨有新版)
+最新仓库版本: \`v${REMOTE_VER}\` (✨有新版)
 💡 *司令部提示：检测到新版装甲，请长官登录节点执行平滑热更新！*"
 elif [ -n "$REMOTE_VER" ] && [ "$REMOTE_VER" == "$LOCAL_VER" ]; then
     MSG="$MSG
-最新官方版本: \`v${REMOTE_VER}\` (✅已是最新)
+最新仓库版本: \`v${REMOTE_VER}\` (✅已是最新)
 💡 *哨兵正在后台默默守护您的资产。*"
 else
     # 抓取失败兜底

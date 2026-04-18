@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================================
-# 脚本名称: uninstall_master.sh (IP-Sentinel Master 一键卸载脚本 v3.4.0)
+# 脚本名称: uninstall_master.sh (IP-Sentinel Master 一键卸载脚本 - 动态锚点版)
 # 核心功能: 终止调度进程、清理看门狗定时任务、抹除数据库与配置
 # ==========================================================
 
@@ -27,7 +27,8 @@ fi
 
 # 1. 停止运行中的 Master 守护进程
 echo "[1/3] 正在终止后台中枢调度进程..."
-pgrep -f tg_master.sh | xargs -r kill -9 >/dev/null 2>&1
+# [优化] 使用 pkill 替代 pgrep | xargs，指令更短、容错率更高
+pkill -9 -f "tg_master.sh" >/dev/null 2>&1 || true
 
 # 2. 清除看门狗定时任务 (Cron)
 echo "[2/3] 正在清理系统定时任务 (Cron)..."
