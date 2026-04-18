@@ -162,9 +162,26 @@ while true; do
                     continue
                 fi
 
-                # [核心] 入库时追加 node_alias 与 enable_ota 字段
-                db_exec "INSERT INTO nodes (chat_id, node_name, agent_ip, agent_port, last_seen, region, node_alias, enable_ota) VALUES ('$CHAT_ID', '$NODE_NAME', '$AGENT_IP', '$AGENT_PORT', CURRENT_TIMESTAMP, '$AGENT_REGION', '$NODE_ALIAS', '$AGENT_OTA') ON CONFLICT(chat_id, node_name) DO UPDATE SET agent_ip='$AGENT_IP', agent_port='$AGENT_PORT', last_seen=CURRENT_TIMESTAMP, region='$AGENT_REGION', node_alias='$NODE_ALIAS', enable_ota='$AGENT_OTA';"
-                send_msg "$CHAT_ID" "✅ **司令部确认 (v${MASTER_VERSION})**%0A节点 \`${NODE_ALIAS}\` 档案已录入！"
+                # [v3.6.1 热修复] 如果同一终端地址因 node_name 规则变化而重复注册，自动合并旧档案
+                MERGED_GOOGLE="true"
+                MERGED_TRUST="true"
+                MERGE_NOTE=""
+                ENDPOINT_DUP=$(db_exec "SELECT node_name, IFNULL(enable_google, 'true'), IFNULL(enable_trust, 'true') FROM nodes WHERE chat_id='$CHAT_ID' AND agent_ip='$AGENT_IP' AND agent_port='$AGENT_PORT' LIMIT 1;")
+                if [ -n "$ENDPOINT_DUP" ]; then
+                    OLD_NODE_NAME=$(echo "$ENDPOINT_DUP" | cut -d'|' -f1)
+                    if [ -n "$OLD_NODE_NAME" ] && [ "$OLD_NODE_NAME" != "$NODE_NAME" ]; then
+                        OLD_GOOGLE=$(echo "$ENDPOINT_DUP" | cut -d'|' -f2)
+                        OLD_TRUST=$(echo "$ENDPOINT_DUP" | cut -d'|' -f3)
+                        [ -n "$OLD_GOOGLE" ] && MERGED_GOOGLE="$OLD_GOOGLE"
+                        [ -n "$OLD_TRUST" ] && MERGED_TRUST="$OLD_TRUST"
+                        db_exec "DELETE FROM nodes WHERE chat_id='$CHAT_ID' AND node_name='$OLD_NODE_NAME';"
+                        MERGE_NOTE="%0A🧩 检测到同一终端地址的旧档案，已自动完成合并。"
+                    fi
+                fi
+
+                # [核心] 入库时追加 node_alias、enable_ota，并在主键迁移时继承旧模块开关
+                db_exec "INSERT INTO nodes (chat_id, node_name, agent_ip, agent_port, last_seen, region, node_alias, enable_google, enable_trust, enable_ota) VALUES ('$CHAT_ID', '$NODE_NAME', '$AGENT_IP', '$AGENT_PORT', CURRENT_TIMESTAMP, '$AGENT_REGION', '$NODE_ALIAS', '$MERGED_GOOGLE', '$MERGED_TRUST', '$AGENT_OTA') ON CONFLICT(chat_id, node_name) DO UPDATE SET agent_ip='$AGENT_IP', agent_port='$AGENT_PORT', last_seen=CURRENT_TIMESTAMP, region='$AGENT_REGION', node_alias='$NODE_ALIAS', enable_ota='$AGENT_OTA';"
+                send_msg "$CHAT_ID" "✅ **司令部确认 (v${MASTER_VERSION})**%0A节点 \`${NODE_ALIAS}\` 档案已录入！${MERGE_NOTE}"
 
                 # ================== [v3.1.3 丝滑连招: 直接呼出全球大区雷达] ==================
                 REGION_DATA=$(db_exec "SELECT region, COUNT(*) FROM nodes WHERE chat_id='$CHAT_ID' GROUP BY region;")
