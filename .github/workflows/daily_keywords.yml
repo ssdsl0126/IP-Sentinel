@@ -31,11 +31,10 @@ jobs:
       - name: Execute Trust URL Engine
         run: python scripts/fetch_trust_urls.py
 
-      - name: Commit and Push Data to Automation Branch
+      - name: Commit and Push Data to Main
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git switch -C automation/daily-data
           git add data/keywords/
           git add data/regions/
           if git diff --staged --quiet; then
@@ -43,4 +42,4 @@ jobs:
             exit 0
           fi
           git commit -m "chore(data): refresh daily data set [$(date +'%Y-%m-%d')]"
-          git push --force-with-lease origin automation/daily-data
+          git push origin main
