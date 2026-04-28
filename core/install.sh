@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # ==========================================================
 # 脚本名称: install.sh (IP-Sentinel 分布式边缘节点部署脚本 - 动态锚点版)
@@ -20,7 +20,7 @@ SECURE_TMP=$(mktemp -d /tmp/ips_install.XXXXXX)
 trap 'rm -rf "$SECURE_TMP"' EXIT HUP INT QUIT TERM
 
 # 你的 GitHub 仓库 Raw 数据直链前缀
-REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
+REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/main"
 
 INSTALL_DIR="/opt/ip_sentinel"
 CONFIG_FILE="${INSTALL_DIR}/config.conf"
@@ -312,15 +312,15 @@ if [ "$UPGRADE_MODE" == "false" ]; then
     if [[ "$TG_CHOICE" =~ ^[Yy]$ ]]; then
         echo -e "\n请选择中枢接入模式 (推荐私有部署，支持后续 OTA 远程静默升级):"
         echo "  1) 🛡️ 私有独立中枢 (需提供自建 Bot Token，推荐)"
-        echo "  2) ☁️ 官方公共网关 (@PrivateMasterOnly，新手免配置)"
+        echo "  2) ☁️ 官方公共网关 (@OmniBeacon_bot，新手免配置)"
         read -p "请输入选择 [1-2] (默认1): " MASTER_TYPE
-        MASTER_TYPE=1
+        MASTER_TYPE=${MASTER_TYPE:-1}
         
-        if [ "$MASTER_TYPE" == "__disabled_shared_gateway__" ]; then
-            TG_TOKEN="DISABLED_SHARED_GATEWAY_MODE" 
-            TG_API_URL="" 
+        if [ "$MASTER_TYPE" == "2" ]; then
+            TG_TOKEN="OFFICIAL_GATEWAY_MODE" 
+            TG_API_URL="https://omni-gateway.samanthaestime296.workers.dev" 
             ENABLE_OTA="false"
-            echo -e "\033[32m✅ 已自动连接官方安全网关 (@PrivateMasterOnly)。\033[0m"
+            echo -e "\033[32m✅ 已自动连接官方安全网关 (@OmniBeacon_bot)。\033[0m"
             echo -e "\033[33m👉 请确保您已在 TG 中关注官方机器人并发送过 /start，否则将无法接收消息。\033[0m"
             # [v3.6.0 安全熔断]
             echo -e "\n\033[33m⚠️ 【安全熔断提示】\033[0m"
@@ -1030,7 +1030,16 @@ fi
 echo "🗑️ 若未来需卸载，可重新运行本脚本选择[2]或执行: bash ${INSTALL_DIR}/core/uninstall.sh"
 echo "========================================================"
 
-# Self-hosted fork: external install-count telemetry is disabled.
+# ================== [v3.1.2 新增: 玻璃房透明装机统计] ==================
+# [修复] 仅在全新部署时触发统计，平滑升级/OTA 时绝对不触发，防止配额耗尽与数据注水
 if [ "$UPGRADE_MODE" == "false" ]; then
-    echo -e "\nSelf-hosted deployment: install-count telemetry disabled.\n"
+    echo -e "\n📡 正在向开源社区汇报装机量 (完全匿名，不收集IP)..."
+    AGENT_COUNT=$(curl -s -m 3 "https://ip-sentinel-count.samanthaestime296.workers.dev/ping/agent" || echo "")
+
+    if [ -n "$AGENT_COUNT" ] && [[ "$AGENT_COUNT" =~ ^[0-9]+$ ]]; then
+        echo -e "\033[32m✅ 感谢您成为全球第 ${AGENT_COUNT} 名 IP-Sentinel 哨兵！\033[0m"
+    else
+        echo -e "\033[32m✅ 感谢您加入 IP-Sentinel 哨兵阵列！\033[0m"
+    fi
+    echo -e "\n"
 fi

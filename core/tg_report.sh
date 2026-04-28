@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # ==========================================================
 # 脚本名称: tg_report.sh (Telegram 每日战报模块 - 动态锚点版)
@@ -178,7 +178,7 @@ LOCAL_VER="${AGENT_VERSION:-未知}"
 REPORT_UTC_TIME=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
 
 # 极轻量级探针: 抓取 GitHub 云端的 version.txt (超时 3 秒，KV解析法)
-REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
+REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/main"
 REMOTE_VER=$(curl -s -m 3 "${REPO_RAW_URL}/version.txt" | grep "^AGENT_VERSION=" | cut -d'=' -f2 | tr -d '[:space:]')
 
 # 构建底部引擎状态块

@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # ==========================================================
 # 脚本名称: tg_master.sh (Master 端调度枢纽 - 动态锚点版)
@@ -10,7 +10,7 @@ CONF="/opt/ip_sentinel_master/master.conf"
 source "$CONF"
 
 # [核心: 运行态版本继承与云通信地址]
-REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
+REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/main"
 
 # MASTER_VERSION 已经在上方的 source "$CONF" 中被载入
 # 如果本地极度陈旧没有该变量，才给定一个基础兜底值，避免变量为空导致崩溃
@@ -283,7 +283,7 @@ while true; do
                         VER_INFO="${VER_INFO}\n✨ **发现新版本**: \`v${REMOTE_VER}\` (可执行中枢热重载)"
                         
                         # 仅当非官方网关 且 开启了中枢 OTA 权限时，才渲染升级按钮
-                        if [ "$IS_SHARED_GATEWAY_DISABLED" != "true" ] && [ "${ENABLE_MASTER_OTA:-false}" == "true" ]; then
+                        if [ "$IS_OFFICIAL_GATEWAY" != "true" ] && [ "${ENABLE_MASTER_OTA:-false}" == "true" ]; then
                             BTN_MASTER_OTA="[{\"text\":\"🆙 升级司令部至 v${REMOTE_VER}\",\"callback_data\":\"master_ota_confirm\"}],"
                         fi
                     fi
@@ -292,7 +292,7 @@ while true; do
                     [ -z "$NODE_COUNT" ] && NODE_COUNT=0
 
                     # L0 扁平化重构：将司令部升级按钮动态置于最顶层
-                    if [ "$IS_SHARED_GATEWAY_DISABLED" != "true" ]; then
+                    if [ "$IS_OFFICIAL_GATEWAY" != "true" ]; then
                         BTNS="[${BTN_MASTER_OTA}[{\"text\":\"🌍 进入全球战区雷达 (管理节点)\",\"callback_data\":\"list_nodes\"}], [{\"text\":\"🚀 全军总攻\",\"callback_data\":\"all_run\"}, {\"text\":\"📊 全军简报\",\"callback_data\":\"all_reports\"}], [{\"text\":\"☢️ 全舰队 OTA 热重载\",\"callback_data\":\"all_ota_confirm\"}]]"
                     else
                         BTNS="[[{\"text\":\"🌍 进入全球战区雷达 (管理节点)\",\"callback_data\":\"list_nodes\"}], [{\"text\":\"🚀 全军总攻\",\"callback_data\":\"all_run\"}, {\"text\":\"📊 全军简报\",\"callback_data\":\"all_reports\"}]]"
@@ -558,7 +558,7 @@ while true; do
                     BTN_TOGGLE="[{\"text\":\"$BTN_G\",\"callback_data\":\"toggle:google:$TARGET_NODE:$ACT_G\"}, {\"text\":\"$BTN_T\",\"callback_data\":\"toggle:trust:$TARGET_NODE:$ACT_T\"}]"
 
                     # 模块三：深度配置管理 (结合 UI 熔断)
-                    if [ "$IS_SHARED_GATEWAY_DISABLED" != "true" ] && [ "$ST_OTA" == "true" ]; then
+                    if [ "$IS_OFFICIAL_GATEWAY" != "true" ] && [ "$ST_OTA" == "true" ]; then
                         BTN_CONFIG="[{\"text\":\"✏️ 更改终端展示代号\",\"callback_data\":\"rename:$TARGET_NODE\"}, {\"text\":\"🆙 OTA 静默升级\",\"callback_data\":\"ota_confirm:$TARGET_NODE\"}]"
                     else
                         BTN_CONFIG="[{\"text\":\"✏️ 更改终端展示代号\",\"callback_data\":\"rename:$TARGET_NODE\"}]"
@@ -619,7 +619,7 @@ while true; do
                     BTN_ACTION="[{\"text\":\"📍 触发 Google 纠偏\",\"callback_data\":\"google:$TARGET_NODE\"}, {\"text\":\"🛡️ 触发信用净化\",\"callback_data\":\"trust:$TARGET_NODE\"}], [{\"text\":\"🔍 投放深海声呐 (查IP质量)\",\"callback_data\":\"quality:$TARGET_NODE\"}, {\"text\":\"📈 查看 IP 污染趋势图\",\"callback_data\":\"trend:$TARGET_NODE\"}], [{\"text\":\"📜 提取终端实时日志\",\"callback_data\":\"log:$TARGET_NODE\"}, {\"text\":\"📊 生成单机战报\",\"callback_data\":\"report:$TARGET_NODE\"}]"
                             BTN_TOGGLE="[{\"text\":\"$BTN_G\",\"callback_data\":\"toggle:google:$TARGET_NODE:$ACT_G\"}, {\"text\":\"$BTN_T\",\"callback_data\":\"toggle:trust:$TARGET_NODE:$ACT_T\"}]"
                             
-                            if [ "$IS_SHARED_GATEWAY_DISABLED" != "true" ] && [ "$ST_OTA" == "true" ]; then
+                            if [ "$IS_OFFICIAL_GATEWAY" != "true" ] && [ "$ST_OTA" == "true" ]; then
                                 BTN_CONFIG="[{\"text\":\"✏️ 更改终端展示代号\",\"callback_data\":\"rename:$TARGET_NODE\"}, {\"text\":\"🆙 OTA 静默升级\",\"callback_data\":\"ota_confirm:$TARGET_NODE\"}]"
                             else
                                 BTN_CONFIG="[{\"text\":\"✏️ 更改终端展示代号\",\"callback_data\":\"rename:$TARGET_NODE\"}]"

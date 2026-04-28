@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # ==========================================================
 # 脚本名称: install_master.sh (IP-Sentinel 控制中枢部署脚本 - 动态锚点版)
@@ -19,9 +19,9 @@ SECURE_TMP=$(mktemp -d /tmp/ips_master_install.XXXXXX)
 trap 'rm -rf "$SECURE_TMP"' EXIT HUP INT QUIT TERM
 
 # 你的 GitHub 仓库 Raw 数据直链前缀
-REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
+REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/main"
 # 临时改为开发地址用于测试
-# REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/v3.6.2-rc"
+# REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/v3.6.2-rc"
 
 # [核心: 动态提取 Master 专属版本锚点 (KV 解析法)]
 # 通过 grep 定位 MASTER_VERSION 行，再通过 cut 提取等号右侧的值
@@ -204,12 +204,12 @@ if [ "$UPGRADE_MODE" == "false" ]; then
     echo "  1) 🛡️ 私有独立中枢 (默认推荐，保留完整 OTA 遥控权限)"
     echo "  2) ☁️ 官方公共网关 (面向大众服务，将强制物理隐藏全局 OTA 按钮防滥用)"
     read -p "请输入选择 [1-2] (默认1): " GATEWAY_TYPE
-    GATEWAY_TYPE=1
+    GATEWAY_TYPE=${GATEWAY_TYPE:-1}
     
-    IS_SHARED_GATEWAY_DISABLED="false"
+    IS_OFFICIAL_GATEWAY="false"
     ENABLE_MASTER_OTA="false"
-    if [ "$GATEWAY_TYPE" == "__disabled_shared_gateway__" ]; then
-        IS_SHARED_GATEWAY_DISABLED="true"
+    if [ "$GATEWAY_TYPE" == "2" ]; then
+        IS_OFFICIAL_GATEWAY="true"
         echo -e "\033[33m⚠️ 已开启官方公共网关模式，全舰队与司令部的 OTA 将被强制屏蔽。\033[0m"
     else
         # [v3.6.1] 私有模式开放中枢 OTA 授权向导
@@ -232,7 +232,7 @@ TG_TOKEN="$TG_TOKEN"
 DB_FILE="$DB_FILE"
 MASTER_DIR="$MASTER_DIR"
 # [v3.6.0 核心] 官方网关 UI 熔断标识
-IS_SHARED_GATEWAY_DISABLED="$IS_SHARED_GATEWAY_DISABLED"
+IS_OFFICIAL_GATEWAY="$IS_OFFICIAL_GATEWAY"
 # [v3.6.1 新增] 司令部自身 OTA 授权标识
 ENABLE_MASTER_OTA="$ENABLE_MASTER_OTA"
 EOF
@@ -240,8 +240,8 @@ fi
 
 # [v3.6.1 热修复] 老司令部平滑升级时，自动补齐缺失字段
 if [ "$UPGRADE_MODE" == "true" ]; then
-    if ! grep -q "^IS_SHARED_GATEWAY_DISABLED=" "${MASTER_DIR}/master.conf"; then
-        echo "IS_SHARED_GATEWAY_DISABLED=\"false\"" >> "${MASTER_DIR}/master.conf"
+    if ! grep -q "^IS_OFFICIAL_GATEWAY=" "${MASTER_DIR}/master.conf"; then
+        echo "IS_OFFICIAL_GATEWAY=\"false\"" >> "${MASTER_DIR}/master.conf"
     fi
     if ! grep -q "^ENABLE_MASTER_OTA=" "${MASTER_DIR}/master.conf"; then
         echo "ENABLE_MASTER_OTA=\"false\"" >> "${MASTER_DIR}/master.conf"
@@ -373,7 +373,16 @@ fi
 echo "========================================================"
 # =================================================================
 
-# Self-hosted fork: external install-count telemetry is disabled.
+# ================== [v3.1.2 新增: 玻璃房透明装机统计] ==================
+# [修复] 仅在全新部署时触发统计，司令部热重载时绝对不触发
 if [ "$UPGRADE_MODE" == "false" ]; then
-    echo -e "\nSelf-hosted deployment: install-count telemetry disabled.\n"
+    echo -e "\n📡 正在向开源社区汇报装机量 (完全匿名，不收集IP)..."
+    MASTER_COUNT=$(curl -s -m 3 "https://ip-sentinel-count.samanthaestime296.workers.dev/ping/master" || echo "")
+
+    if [ -n "$MASTER_COUNT" ] && [[ "$MASTER_COUNT" =~ ^[0-9]+$ ]]; then
+        echo -e "\033[32m✅ 感谢您成为全球第 ${MASTER_COUNT} 名 IP-Sentinel 指挥官！\033[0m"
+    else
+        echo -e "\033[32m✅ 感谢您建立 IP-Sentinel 司令部！\033[0m"
+    fi
+    echo -e "\n"
 fi
