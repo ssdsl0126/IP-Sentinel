@@ -4,17 +4,36 @@
     "base_lat": 35.6812,
     "base_lon": 139.7671,
     "lang_params": "hl=ja&gl=JP",
-    "valid_url_suffix": "com" 
+    "valid_url_suffix": "com"
   },
   "trust_module": {
     "white_urls": [
-      "https://ja.wikipedia.org/wiki/Special:Random",
-      "https://www.yahoo.co.jp/",
+      "https://news.yahoo.co.jp/pickup/6577949?source=rss",
+      "https://www.u-tokyo.ac.jp/",
       "https://www.rakuten.co.jp/",
-      "https://www.nhk.or.jp/",
-      "kakaku.com/",
-      "https://www.goo.ne.jp/",
-      "https://www.amazon.co.jp/"
+      "https://news.yahoo.co.jp/pickup/6577961?source=rss",
+      "https://news.yahoo.co.jp/pickup/6577960?source=rss",
+      "https://www.amazon.co.jp/",
+      "https://www.jreast.co.jp/",
+      "https://news.yahoo.co.jp/pickup/6577958?source=rss",
+      "https://www.japan.go.jp/",
+      "https://news.yahoo.co.jp/pickup/6577959?source=rss",
+      "https://www.mhlw.go.jp/",
+      "https://news.yahoo.co.jp/pickup/6577941?source=rss",
+      "https://news.yahoo.co.jp/pickup/6577931?source=rss",
+      "https://news.yahoo.co.jp/pickup/6577954?source=rss",
+      "https://www.smbc.co.jp/",
+      "https://www.yahoo.co.jp/"
+    ],
+    "static_urls": [
+      "https://www.japan.go.jp/",
+      "https://www.mhlw.go.jp/",
+      "https://www.u-tokyo.ac.jp/",
+      "https://www.smbc.co.jp/",
+      "https://www.jreast.co.jp/",
+      "https://www.yahoo.co.jp/",
+      "https://www.amazon.co.jp/",
+      "https://www.rakuten.co.jp/"
     ]
   }
 }

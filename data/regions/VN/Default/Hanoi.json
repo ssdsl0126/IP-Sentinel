@@ -8,13 +8,37 @@
   },
   "trust_module": {
     "white_urls": [
-      "https://vi.wikipedia.org/wiki/Đặc_biệt:Ngẫu_nhiên",
+      "https://vnexpress.net/tom-hum-thoat-chet-nho-mau-sac-hiem-5067821.html",
+      "https://vnexpress.net/van-cuoc-cuoc-doi-voi-xe-dien-cua-founder-dat-bike-5067616.html",
       "https://chinhphu.vn/",
+      "https://vnexpress.net/60-quoc-gia-ban-cach-thoat-phu-thuoc-dau-khi-than-5067685.html",
+      "https://vnexpress.net/vinhomes-green-paradise-don-them-hai-thuong-hieu-khach-san-quoc-te-5067817.html",
+      "https://vnu.edu.vn/",
       "https://vnexpress.net/",
-      "https://tuoitre.vn/",
-      "https://vtv.vn/",
+      "https://vnexpress.net/vi-sao-chi-em-dau-de-mau-thuan-5067671.html",
       "https://shopee.vn/",
-      "https://tiki.vn/"
+      "https://vnexpress.net/nhung-dua-tre-bi-day-vao-bang-dang-o-haiti-5059494.html",
+      "https://vnexpress.net/luc-luong-nga-rut-khoi-thanh-pho-quan-trong-o-mali-5067759.html",
+      "https://vnexpress.net/tinh-toan-vay-700-trieu-mua-them-dat-thay-vi-tra-no-1-5-ty-5067727.html",
+      "https://vnexpress.net/carrick-man-utd-khong-nen-an-mung-qua-muc-ve-du-champions-league-5067713.html",
+      "https://tiki.vn/",
+      "https://dichvucong.gov.vn/",
+      "https://vnexpress.net/gia-ve-may-bay-tang-chuyen-di-mua-he-ngay-cang-xa-voi-5067745.html",
+      "https://vnexpress.net/tiem-kich-iran-tung-vuot-luoi-patriot-nem-bom-can-cu-my-5067737.html",
+      "https://vnexpress.net/ong-putin-noi-da-nhan-duoc-thong-diep-tu-lanh-tu-toi-cao-iran-5067763.html",
+      "https://www.vietcombank.com.vn/",
+      "https://vnexpress.net/thai-lan-tinh-bo-chinh-sach-mien-visa-du-lich-60-ngay-5067738.html",
+      "https://vnexpress.net/xin-nghi-viec-de-len-ke-hoach-dam-trong-thuong-dong-nghiep-5067787.html",
+      "https://vnexpress.net/dot-quy-hai-lan-trong-5-ngay-5067695.html"
+    ],
+    "static_urls": [
+      "https://chinhphu.vn/",
+      "https://dichvucong.gov.vn/",
+      "https://vnu.edu.vn/",
+      "https://www.vietcombank.com.vn/",
+      "https://shopee.vn/",
+      "https://tiki.vn/",
+      "https://vnexpress.net/"
     ]
   }
 }

@@ -8,13 +8,37 @@
   },
   "trust_module": {
     "white_urls": [
-      "https://nl.wikipedia.org/wiki/Speciaal:Willekeurig",
+      "https://nos.nl/l/2612225",
+      "https://nos.nl/l/2612184",
+      "https://nos.nl/l/2612232",
+      "https://www.marktplaats.nl/",
+      "https://nos.nl/l/2612197",
+      "https://nos.nl/l/2612213",
       "https://www.rijksoverheid.nl/",
-      "https://www.nos.nl/",
+      "https://nos.nl/l/2612247",
+      "https://nos.nl/l/2612245",
+      "https://nos.nl/l/2612219",
+      "https://www.belastingdienst.nl/",
+      "https://nos.nl/l/2612178",
+      "https://nos.nl/l/2612254",
+      "https://nos.nl/l/2612201",
+      "https://nos.nl/l/2612185",
       "https://www.bol.com/",
-      "https://www.nu.nl/",
+      "https://www.ing.nl/",
       "https://www.buienradar.nl/",
-      "https://www.telegraaf.nl/"
+      "https://nos.nl/l/2612249",
+      "https://nos.nl/l/2612246",
+      "https://nos.nl/l/2612180",
+      "https://www.ns.nl/"
+    ],
+    "static_urls": [
+      "https://www.rijksoverheid.nl/",
+      "https://www.belastingdienst.nl/",
+      "https://www.ing.nl/",
+      "https://www.ns.nl/",
+      "https://www.bol.com/",
+      "https://www.marktplaats.nl/",
+      "https://www.buienradar.nl/"
     ]
   }
 }

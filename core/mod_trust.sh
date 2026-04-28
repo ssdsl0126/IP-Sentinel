@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ==========================================================
 # 脚本名称: mod_trust.sh (IP 信用净化模块 - 动态锚点版)
@@ -10,6 +10,8 @@ CONFIG_FILE="${INSTALL_DIR}/config.conf"
 UA_FILE="${INSTALL_DIR}/data/user_agents.txt"
 # 你的 GitHub 仓库 Raw 数据直链前缀
 REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
+# 临时改为私库地址用于测试
+# REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/v3.6.2-rc"
 
 # 1. 基础环境校验
 [ ! -f "$CONFIG_FILE" ] && exit 1
@@ -22,9 +24,11 @@ LOG_FILE="${INSTALL_DIR}/logs/sentinel.log"
 # 利用 find 穿透多级子目录，自动抓取安装时落地的那份专属 json 文件
 REGION_JSON_FILE=$(find "${INSTALL_DIR}/data/regions" -name "*.json" 2>/dev/null | head -n 1)
 
-# 兼容兜底：如果本地没找到 json，则直接使用默认白名单
+# 兼容旧节点兜底：如果本地真没找到 json，回退到拉取云端通用大区配置
 if [ -z "$REGION_JSON_FILE" ] || [ ! -f "$REGION_JSON_FILE" ]; then
-    REGION_JSON_FILE=""
+    REGION_JSON_FILE="${INSTALL_DIR}/data/regions/${REGION}.json"
+    mkdir -p "${INSTALL_DIR}/data/regions"
+    curl -${IP_PREF:-4} -sL "${REPO_RAW_URL}/data/regions/${REGION}.json" -o "$REGION_JSON_FILE"
 fi
 
 # 使用 jq 将 json 中的网址数组安全地读入 Bash 数组
@@ -41,7 +45,8 @@ fi
 log_msg() {
     local TYPE=$1
     local MSG=$2
-    local TIME=$(date "+%Y-%m-%d %H:%M:%S")
+    # [时区对齐] 强制无视本地时区，以绝对 UTC 时间生成日志时间戳
+    local TIME=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
     # [v3.4.0 核心] 提取当前配置中的版本锚点
     local local_ver="${AGENT_VERSION:-未知}"
     
@@ -95,14 +100,21 @@ CURL_BIND_OPT=""
 DYNAMIC_IP_PREF="-${IP_PREF:-4}" # 默认提取用户配置
 
 if [[ -n "$BIND_IP" && "$BIND_IP" =~ ^[0-9a-fA-F:\.]+$ ]]; then
-    CURL_BIND_OPT="--interface $BIND_IP"
-    # 智能探测：带冒号为 V6，带点号为 V4
-    if [[ "$BIND_IP" == *":"* ]]; then
-        DYNAMIC_IP_PREF="-6"
-        log_msg "INFO " "底层路由锁定: 绑定 IPv6 出口及协议 ($BIND_IP)"
-    elif [[ "$BIND_IP" == *"."* ]]; then
-        DYNAMIC_IP_PREF="-4"
-        log_msg "INFO " "底层路由锁定: 绑定 IPv4 出口及协议 ($BIND_IP)"
+    # [v3.6.3 容错层补丁] 探测物理网卡/虚拟 IP 存活状态
+    RAW_BIND_IP=$(echo "$BIND_IP" | tr -d '[]')
+    if ! ip addr show 2>/dev/null | grep -qw "$RAW_BIND_IP"; then
+        log_msg "WARN " "检测到配置的出口 IP ($RAW_BIND_IP) 已丢失，自动降级为系统默认路由出网！"
+        CURL_BIND_OPT=""
+    else
+        CURL_BIND_OPT="--interface $BIND_IP"
+        # 智能探测：带冒号为 V6，带点号为 V4
+        if [[ "$BIND_IP" == *":"* ]]; then
+            DYNAMIC_IP_PREF="-6"
+            log_msg "INFO " "底层路由锁定: 绑定 IPv6 出口及协议 ($BIND_IP)"
+        elif [[ "$BIND_IP" == *"."* ]]; then
+            DYNAMIC_IP_PREF="-4"
+            log_msg "INFO " "底层路由锁定: 绑定 IPv4 出口及协议 ($BIND_IP)"
+        fi
     fi
 fi
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ==========================================================
 # 脚本名称: tg_report.sh (Telegram 每日战报模块 - 动态锚点版)
@@ -22,7 +22,7 @@ fi
 # [v3.5.2 核心: 引入双轨身份架构]
 if [ -z "$NODE_NAME" ]; then
     IP_HASH=$(echo "${PUBLIC_IP:-127.0.0.1}" | md5sum | cut -c 1-4 | tr 'a-z' 'A-Z')
-    NODE_NAME="$(hostname | tr -cd 'a-zA-Z0-9' | cut -c 1-10)-${IP_HASH}"
+    NODE_NAME="$(hostname | cut -c 1-10)-${IP_HASH}"
 fi
 NODE_ALIAS="${NODE_ALIAS:-$NODE_NAME}"
 
@@ -31,11 +31,17 @@ CURL_BIND_OPT=""
 DYNAMIC_IP_PREF="-${IP_PREF:-4}"
 
 if [[ -n "$BIND_IP" && "$BIND_IP" =~ ^[0-9a-fA-F:\.]+$ ]]; then
-    CURL_BIND_OPT="--interface $BIND_IP"
-    if [[ "$BIND_IP" == *":"* ]]; then
-        DYNAMIC_IP_PREF="-6"
-    elif [[ "$BIND_IP" == *"."* ]]; then
-        DYNAMIC_IP_PREF="-4"
+    # [v3.6.3 容错层补丁] 探测物理网卡/虚拟 IP 存活状态
+    RAW_BIND_IP=$(echo "$BIND_IP" | tr -d '[]')
+    if ! ip addr show 2>/dev/null | grep -qw "$RAW_BIND_IP"; then
+        CURL_BIND_OPT=""
+    else
+        CURL_BIND_OPT="--interface $BIND_IP"
+        if [[ "$BIND_IP" == *":"* ]]; then
+            DYNAMIC_IP_PREF="-6"
+        elif [[ "$BIND_IP" == *"."* ]]; then
+            DYNAMIC_IP_PREF="-4"
+        fi
     fi
 fi
 
@@ -82,21 +88,15 @@ fi
 case "$REGION_CODE" in
     "JP") FLAG="🇯🇵" ;;
     "US") FLAG="🇺🇸" ;;
-    "CA") FLAG="🇨🇦" ;;
     "DE") FLAG="🇩🇪" ;;
-    "ES") FLAG="🇪🇸" ;;
-    "FR") FLAG="🇫🇷" ;;
     "SG") FLAG="🇸🇬" ;;
     "HK") FLAG="🇭🇰" ;;
-    "KR") FLAG="🇰🇷" ;;
-    "NL") FLAG="🇳🇱" ;;
-    "TW") FLAG="🇹🇼" ;;
     "GB"|"UK") FLAG="🇬🇧" ;;
-    "VN") FLAG="🇻🇳" ;;
+    "AU") FLAG="🇦🇺" ;;
     *) FLAG="🌐" ;;
 esac
 
-# 3. 截取过去 24 小时的日志 (每天48次轮询，保留最新 1000 行足以覆盖单日战报)
+# 3. 截取过去 24 小时的日志 (每天72次轮询，保留最新 1000 行足以覆盖单日战报)
 LOG_CONTENT=$(tail -n 1000 "$LOG_FILE" 2>/dev/null)
 
 if [ -z "$LOG_CONTENT" ]; then
@@ -140,7 +140,7 @@ else
 
 🎯 **[Google 区域纠偏]**
 🚀 执行总数: ${G_TOTAL} 次 (胜率: **${G_RATE}%**)
-✅ 成功: ${G_SUCCESS} | ❌ 漂移: ${G_FAILED} | ⚠️ 警告: ${G_WARN}"
+✅ 成功: ${G_SUCCESS} | ❌ 送中: ${G_FAILED} | ⚠️ 警告: ${G_WARN}"
     fi
 
     # --- [分析块 2: IP 信用净化模块] ---
@@ -164,7 +164,7 @@ else
     MSG="$MSG
 
 🕒 **最近执行快照 [${LAST_MOD:-"System"}]:**
-时间: ${LAST_TIME:-"暂无数据"}
+时间: ${LAST_TIME:-"暂无数据"} (节点本地)
 结论: ${LAST_SCORE:-"暂无数据"}"
 
 fi
@@ -174,6 +174,8 @@ fi
 # ==========================================
 # 从配置文件提取当前本地版本，若无则默认为未知
 LOCAL_VER="${AGENT_VERSION:-未知}"
+# [时区对齐] 强制获取当前绝对 UTC 时间，作为全局统一的战报落款
+REPORT_UTC_TIME=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
 
 # 极轻量级探针: 抓取 GitHub 云端的 version.txt (超时 3 秒，KV解析法)
 REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
@@ -183,16 +185,17 @@ REMOTE_VER=$(curl -s -m 3 "${REPO_RAW_URL}/version.txt" | grep "^AGENT_VERSION="
 MSG="$MSG
 ----------------------------
 🛡️ **系统引擎状态**
+⏱️ 战报生成: \`${REPORT_UTC_TIME}\`
 当前运行版本: \`v${LOCAL_VER}\`"
 
 # 比对逻辑：如果成功抓到了远端版本，且和本地不一样
 if [ -n "$REMOTE_VER" ] && [ "$REMOTE_VER" != "$LOCAL_VER" ]; then
     MSG="$MSG
-最新仓库版本: \`v${REMOTE_VER}\` (✨有新版)
+最新官方版本: \`v${REMOTE_VER}\` (✨有新版)
 💡 *司令部提示：检测到新版装甲，请长官登录节点执行平滑热更新！*"
 elif [ -n "$REMOTE_VER" ] && [ "$REMOTE_VER" == "$LOCAL_VER" ]; then
     MSG="$MSG
-最新仓库版本: \`v${REMOTE_VER}\` (✅已是最新)
+最新官方版本: \`v${REMOTE_VER}\` (✅已是最新)
 💡 *哨兵正在后台默默守护您的资产。*"
 else
     # 抓取失败兜底
@@ -200,11 +203,24 @@ else
 💡 *哨兵正在后台默默守护您的资产。*"
 fi
 
-# 5. 调用 API 推送 (接入安全网关)
+# 5. 调用 API 推送 (接入安全网关，挂载交互式控制台按钮)
+JSON_PAYLOAD=$(jq -n \
+  --arg cid "$CHAT_ID" \
+  --arg txt "$MSG" \
+  --arg cb "manage:${NODE_NAME}" \
+  '{
+    chat_id: $cid,
+    text: $txt,
+    parse_mode: "Markdown",
+    disable_web_page_preview: true,
+    reply_markup: {
+      inline_keyboard: [[{text: "⚙️ 调出该节点控制台", callback_data: $cb}]]
+    }
+  }')
+
 RESPONSE=$(curl -s -m 10 -X POST "${TG_API_URL}" \
-    -d "chat_id=${CHAT_ID}" \
-    -d "text=${MSG}" \
-    -d "parse_mode=Markdown")
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD")
 
 if [[ "$RESPONSE" != *"\"ok\":true"* ]]; then
     echo "❌ 战报发送失败！API 响应: $RESPONSE" >> "${INSTALL_DIR}/logs/error.log"

@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ==========================================================
 # 脚本名称: updater.sh (IP-Sentinel 养料注入与分频调度中枢 - 动态锚点版)
@@ -11,6 +11,8 @@ UA_TIME_FILE="${INSTALL_DIR}/core/.ua_last_update"
 
 # GitHub 仓库 Raw 数据直链前缀
 REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
+# 临时改为开发地址用于测试
+# REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/v3.6.2-rc"
 
 # 1. 加载本地冷数据配置
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -23,9 +25,21 @@ log() {
     # [v3.4.0 核心] 提取当前配置中的版本锚点
     local local_ver="${AGENT_VERSION:-未知}"
     
+    # 保证日志目录存在
     mkdir -p "${INSTALL_DIR}/logs"
+
     # 日志格式注入 [版本号] 追踪标识
-    printf "[$(date '+%Y-%m-%d %H:%M:%S')] [v%-5s] [%-5s] [%-7s] [%s] %s\n" "$local_ver" "$2" "$1" "$REGION_CODE" "$3" >> "$LOG_FILE"
+    local core_msg=$(printf "[v%-5s] [%-5s] [%-7s] [%s] %s" "$local_ver" "$2" "$1" "$REGION_CODE" "$3")
+    # [时区对齐] 强制无视本地时区，以绝对 UTC 时间写入日志
+    echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] $core_msg" >> "$LOG_FILE"
+
+    # 强制推送到 Systemd Journal (如果系统支持)
+    if command -v logger >/dev/null 2>&1; then
+        logger -t ip-sentinel "$core_msg"
+    else
+        # 降级输出到 stdout，让 Systemd 捕获
+        echo "$core_msg"
+    fi
 }
 
 log "Updater" "INFO " "========== 触发后台静默 OTA 热数据更新 =========="
@@ -40,7 +54,12 @@ CURL_CMD="curl -${IP_PREF:-4} -sL"
 if [ -n "$BIND_IP" ]; then
     # curl 的 --interface 参数不支持带方括号的 IPv6 地址，必须强行脱壳
     RAW_BIND_IP=$(echo "$BIND_IP" | tr -d '[]')
-    CURL_CMD="$CURL_CMD --interface $RAW_BIND_IP"
+    # [v3.6.3 容错层补丁] 探测网卡存活状态，防止 IP 漂移导致永久断网
+    if ! ip addr show 2>/dev/null | grep -qw "$RAW_BIND_IP"; then
+        log "Updater" "WARN " "检测到绑定的出口 IP ($RAW_BIND_IP) 已丢失，自动退回默认路由！"
+    else
+        CURL_CMD="$CURL_CMD --interface $RAW_BIND_IP"
+    fi
 fi
 
 # ==========================================================
@@ -113,6 +132,22 @@ if [ -n "$REGION_JSON_FILE" ] && [ -f "$REGION_JSON_FILE" ]; then
         log "Updater" "WARN " "❌ 战区规则库拉取失败，保留本地旧数据"
         rm -f "$TMP_JSON"
     fi
+fi
+
+# ==========================================================
+# 5.5. 容灾更新深海声呐底层探针 (彻底消除第三方 RCE 依赖)
+# ==========================================================
+TMP_PROBE="/tmp/ip_sentinel_probe.sh"
+$CURL_CMD "https://raw.githubusercontent.com/xykt/IPQuality/main/ip.sh" -o "$TMP_PROBE"
+
+# 🛡️ 供应链防毒：验证脚本内是否包含原作者特有签名，防止被墙重定向为 HTML
+if [ -s "$TMP_PROBE" ] && grep -q "xykt" "$TMP_PROBE" 2>/dev/null; then
+    mv "$TMP_PROBE" "${INSTALL_DIR}/core/ip_probe.sh"
+    chmod +x "${INSTALL_DIR}/core/ip_probe.sh"
+    log "Updater" "INFO " "✅ 深海声呐底层探针 (ip_probe.sh) 源文件安全对齐"
+else
+    log "Updater" "WARN " "❌ 探针源文件拉取受损或遭投毒劫持，已触发防砖机制，保留本地旧版本"
+    rm -f "$TMP_PROBE" 2>/dev/null
 fi
 
 # ==========================================================

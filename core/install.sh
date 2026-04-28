@@ -1,19 +1,35 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ==========================================================
 # 脚本名称: install.sh (IP-Sentinel 分布式边缘节点部署脚本 - 动态锚点版)
 # 核心功能: 战区分组菜单、模块按需开启、官方机器人一键配置、版本状态机路由
 # ==========================================================
 
+# ==========================================================
+# 🛑 核心权限防线: 检查是否以 root 权限运行
+# ==========================================================
+if [ "$EUID" -ne 0 ]; then
+  echo -e "\033[31m❌ 权限被拒绝: 部署 IP-Sentinel 需要最高系统权限。\033[0m"
+  echo -e "💡 请切换到 root 用户 (执行 su root 或 sudo -i) 后重新运行指令。"
+  exit 1
+fi
+
+# 🟢 [防劫持沙盒] 创建具备随机哈希且仅 root 可见的专属安全工作区
+SECURE_TMP=$(mktemp -d /tmp/ips_install.XXXXXX)
+# 确保脚本退出、异常中断或被强杀时，自动销毁沙盒，不留痕迹
+trap 'rm -rf "$SECURE_TMP"' EXIT HUP INT QUIT TERM
+
 # 你的 GitHub 仓库 Raw 数据直链前缀
 REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
+
 INSTALL_DIR="/opt/ip_sentinel"
 CONFIG_FILE="${INSTALL_DIR}/config.conf"
 
 # [核心: 动态提取 Agent 专属版本锚点 (KV 解析法)]
-TARGET_VERSION=$(curl -s -m 3 "${REPO_RAW_URL}/version.txt" | grep "^AGENT_VERSION=" | cut -d'=' -f2 | tr -d '[:space:]')
+# [修复] 增加 -L 与双栈容灾 (-4)，解决纯 V6 或 V6 优先机器连接 GitHub Raw 易超时的问题
+TARGET_VERSION=$( (curl -sL -m 5 "${REPO_RAW_URL}/version.txt" || curl -4 -sL -m 5 "${REPO_RAW_URL}/version.txt") 2>/dev/null | grep "^AGENT_VERSION=" | cut -d'=' -f2 | tr -d '[:space:]')
 # 🛡️ 兜底防线：如果网络波动拉取失败，启用内置的安全兜底版本
-TARGET_VERSION=${TARGET_VERSION:-"3.6.1"}
+TARGET_VERSION=${TARGET_VERSION:-"4.0.0"}
 
 # 轻量级版本号比对函数 (例如: version_lt "3.3.1" "3.4.0" 返回 true)
 version_lt() {
@@ -21,10 +37,10 @@ version_lt() {
 }
 
 # 1. 依赖检查与智能安装 (v3.5.4 兼容性升级: 支持 Alpine, Arch 及更完善的依赖链)
-echo -e "\n[1/7] 正在探测并安装基础环境依赖 (curl, jq, cron, procps, python3, flock)..."
+echo -e "\n[1/7] 正在探测并安装基础环境依赖 (curl, jq, cron, procps, python3)..."
 
 # 定义必须检测的核心命令
-REQUIRED_CMDS=("curl" "jq" "crontab" "pgrep" "python3" "flock")
+REQUIRED_CMDS=("curl" "jq" "crontab" "pgrep" "python3" "openssl")
 MISSING_CMDS=()
 
 # 基础探测：预检查缺失的命令
@@ -37,48 +53,53 @@ done
 # 如果有缺失，执行智能安装逻辑
 if [ ${#MISSING_CMDS[@]} -gt 0 ]; then
     echo "⏳ 发现缺失依赖: ${MISSING_CMDS[*]}，正在尝试自动补齐..."
-
+    
     # 嗅探包管理器
     if command -v apt-get >/dev/null 2>&1; then
         # Debian / Ubuntu 系列
         apt-get update -y >/dev/null 2>&1
-        apt-get install -y curl jq cron procps python3 util-linux >/dev/null 2>&1
+        # [v3.6.3 抽脂级优化] 注入 --no-install-recommends 拒绝捆绑销售，大幅节省磁盘与内存
+        apt-get install -y --no-install-recommends curl jq cron procps python3 openssl >/dev/null 2>&1
         systemctl enable cron >/dev/null 2>&1 && systemctl start cron >/dev/null 2>&1
-
+        
     elif command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1; then
         # RHEL / CentOS / AlmaLinux 系列
         PKG_MGR="yum"
-        command -v dnf >/dev/null 2>&1 && PKG_MGR="dnf"
-        $PKG_MGR install -y curl jq cronie procps-ng python3 util-linux >/dev/null 2>&1
+        OPT_ARGS=""
+        if command -v dnf >/dev/null 2>&1; then
+            PKG_MGR="dnf"
+            # [v3.6.3 抽脂级优化] 强行关闭 DNF 的弱依赖拉取
+            OPT_ARGS="--setopt=install_weak_deps=False"
+        fi
+        $PKG_MGR install -y $OPT_ARGS curl jq cronie procps-ng python3 openssl >/dev/null 2>&1
         systemctl enable crond >/dev/null 2>&1 && systemctl start crond >/dev/null 2>&1
-
+        
     elif command -v apk >/dev/null 2>&1; then
-        # [核心修复 Issue #21] Alpine Linux 系列
+        # Alpine 本身就是极致精简，无需特殊参数
         echo "Alpine 探测到系统类型为 Alpine Linux，正在执行轻量级安装..."
-        apk add --no-cache curl jq dcron procps python3 bash util-linux >/dev/null 2>&1
-        # Alpine 下必须手动创建 cron spool 目录并启动 crond
+        # [修复] 新版 Alpine 已废弃 dcron。优先尝试 cronie，若失败则信任自带 busybox-cron，并移除屏蔽以便暴露报错
+        apk add --no-cache curl jq cronie procps python3 bash openssl || apk add --no-cache curl jq procps python3 bash openssl
         mkdir -p /var/spool/cron/crontabs
         rc-update add crond default >/dev/null 2>&1
         service crond start >/dev/null 2>&1
-
+        
     elif command -v pacman >/dev/null 2>&1; then
-        # [核心修复 Issue #250] Arch Linux 系列
-        pacman -Sy --noconfirm curl jq cronie procps-ng python util-linux >/dev/null 2>&1
-        # Arch 下某些 cronie 实现可能缺少 /root/.cache 权限，做个兼容保障
+        # Arch Linux 系列
+        pacman -Sy --noconfirm curl jq cronie procps-ng python openssl >/dev/null 2>&1
         mkdir -p /root/.cache/crontab 2>/dev/null
         systemctl enable cronie >/dev/null 2>&1 && systemctl start cronie >/dev/null 2>&1
-
+        
     else
-        # 无法识别的系统：退出并给出清晰的引导信息
+        # 无法识别的系统：退出并给出清晰的引导信息 (同步更新防捆绑参数)
         echo -e "\033[31m❌ 自动安装失败：系统未知的包管理器。\033[0m"
         echo -e "\033[33m⚠️ 请根据您的操作系统，手动执行以下安装命令后重新运行本脚本：\033[0m"
-        echo -e "  Debian/Ubuntu: \033[36mapt-get update && apt-get install -y curl jq cron procps python3 util-linux\033[0m"
-        echo -e "  CentOS/RHEL:   \033[36myum install -y curl jq cronie procps-ng python3 util-linux\033[0m"
-        echo -e "  Alpine Linux:  \033[36mapk add --no-cache curl jq dcron procps python3 bash util-linux\033[0m"
-        echo -e "  Arch Linux:    \033[36mpacman -Sy curl jq cronie procps-ng python util-linux\033[0m"
+        echo -e "  Debian/Ubuntu: \033[36mapt-get update && apt-get install -y --no-install-recommends curl jq cron procps python3 openssl\033[0m"
+        echo -e "  CentOS/RHEL:   \033[36myum install -y curl jq cronie procps-ng python3 openssl\033[0m"
+        echo -e "  Alpine Linux:  \033[36mapk add --no-cache curl jq cronie procps python3 bash openssl\033[0m"
+        echo -e "  Arch Linux:    \033[36mpacman -Sy curl jq cronie procps-ng python openssl\033[0m"
         exit 1
     fi
-
+    
     # 安装后二次复检
     for cmd in "${REQUIRED_CMDS[@]}"; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -93,9 +114,8 @@ echo -e "\033[32m✅ 基础环境检测通过。\033[0m"
 
 # 2. 交互式引导与动态地图解析 (v3.0 全球网络)
 echo -e "\n[2/7] 正在连线云端，拉取全球节点地图..."
-curl -sL "${REPO_RAW_URL}/data/map.json" -o "/tmp/map.json"
-
-if [ ! -s "/tmp/map.json" ]; then
+curl -sL "${REPO_RAW_URL}/data/map.json" -o "${SECURE_TMP}/map.json"
+if [ ! -s "${SECURE_TMP}/map.json" ]; then
     echo -e "\033[31m❌ 拉取全球地图失败！请检查网络或 GitHub 仓库地址。\033[0m"
     exit 1
 fi
@@ -120,10 +140,10 @@ else
 
     if [ "$ACTION_CHOICE" == "2" ]; then
         echo -e "\n⏳ 正在拉取卸载程序..."
-        curl -sL "${REPO_RAW_URL}/core/uninstall.sh" -o "/tmp/ip_uninstall.sh"
-        chmod +x "/tmp/ip_uninstall.sh"
-        bash "/tmp/ip_uninstall.sh"
-        rm -f "/tmp/ip_uninstall.sh"
+        curl -sL "${REPO_RAW_URL}/core/uninstall.sh" -o "${SECURE_TMP}/ip_uninstall.sh"
+        chmod +x "${SECURE_TMP}/ip_uninstall.sh"
+        bash "${SECURE_TMP}/ip_uninstall.sh"
+        rm -f "${SECURE_TMP}/ip_uninstall.sh"
         exit 0
     fi
 
@@ -140,7 +160,7 @@ else
             if [[ "$LOG_CHOICE" =~ ^[Nn]$ ]]; then
                 KEEP_LOGS="false"
             fi
-
+            
             # 将原配置读入环境变量，为后续跳过配置步骤提供燃料
             source "$CONFIG_FILE"
             echo -e "\033[32m✅ 已激活 [平滑升级模式]，即将跳过基础配置，直接更新核心装甲...\033[0m"
@@ -152,21 +172,30 @@ else
 fi
 
 # ================== [v3.1.1/v3.2.2 优化: 安装前环境纯净度清理] ==================
-echo -e "\n⏳ 正在清理旧版守护进程与冗余任务..."
-# 1. 强制超度可能存活的 Webhook 及各类看门狗进程，释放端口
-pkill -9 -f "webhook.py" >/dev/null 2>&1 || true
-pkill -9 -f "agent_daemon.sh" >/dev/null 2>&1 || true
-pkill -9 -f "runner.sh" >/dev/null 2>&1 || true
+echo -e "\n⏳ 正在清理系统定时任务中的旧版条目..."
 
-# 2. 清除系统定时任务 (Cron) 中的旧版条目 (安全容错版)
-crontab -l 2>/dev/null | grep -v "ip_sentinel" > /tmp/cron_clean || true
-[ -f /tmp/cron_clean ] && crontab /tmp/cron_clean 2>/dev/null
-rm -f /tmp/cron_clean
+# 1. 清除系统定时任务 (Cron) 中的旧版条目 (安全容错版)
+crontab -l 2>/dev/null | grep -v "ip_sentinel" > "${SECURE_TMP}/cron_clean" || true
+# [追加 >/dev/null 2>&1 堵死 Alpine 的脏话输出]
+[ -f "${SECURE_TMP}/cron_clean" ] && crontab "${SECURE_TMP}/cron_clean" >/dev/null 2>&1
+rm -f "${SECURE_TMP}/cron_clean"
+
+# ==========================================
+# 🛑 [物理抹除] 彻底扫除 Alpine 系统的底层残留与双路径文件
+# ==========================================
+for CRON_FILE in "/var/spool/cron/crontabs/root" "/etc/crontabs/root"; do
+    if [ -f "$CRON_FILE" ]; then
+        grep -v "ip_sentinel" "$CRON_FILE" > "${CRON_FILE}.tmp" 2>/dev/null || true
+        cat "${CRON_FILE}.tmp" > "$CRON_FILE" 2>/dev/null || true
+        rm -f "${CRON_FILE}.tmp" 2>/dev/null
+    fi
+done
+# 清理 OpenRC 开机启动项
+rm -f /etc/local.d/ip_sentinel.start 2>/dev/null
 
 # 3. 抹除旧版核心代码，杜绝代码冲突 (根据模式分流)
 if [ "$UPGRADE_MODE" == "true" ]; then
-    # 升级模式：仅销毁核心引擎，严格保留 config 与 data
-    rm -rf "${INSTALL_DIR}/core" 2>/dev/null
+    # [修复] 升级模式：不再提前销毁核心引擎，改为后续下载成功后的原子化替换，彻底防止断网变砖！
     if [ "$KEEP_LOGS" == "false" ]; then
         rm -rf "${INSTALL_DIR}/logs" 2>/dev/null
         echo -e "🗑️ 历史日志已按指令清空。"
@@ -189,13 +218,13 @@ if [ "$UPGRADE_MODE" == "false" ]; then
 
     # 📍 动态零级菜单：战区(大洲)选择
     echo -e "\n\033[36m📍 【第零级】请选择目标战区 (Continent):\033[0m"
-    jq -r '.continents[] | "\(.id)|\(.name)"' /tmp/map.json > /tmp/continents.txt
+    jq -r '.continents[] | "\(.id)|\(.name)"' "${SECURE_TMP}/map.json" > "${SECURE_TMP}/continents.txt"
     i=1; CONT_MAP=()
     while IFS="|" read -r cont_id cont_name; do
         echo "  $i) $cont_name"
         CONT_MAP[$i]="$cont_id"
         ((i++))
-    done < /tmp/continents.txt
+    done < "${SECURE_TMP}/continents.txt"
 
     read -p "请输入选择 [1-$((i-1))] (默认1): " CONT_SEL
     CONT_SEL=${CONT_SEL:-1}
@@ -203,14 +232,14 @@ if [ "$UPGRADE_MODE" == "false" ]; then
 
     # 📍 动态一级菜单：国家选择 (基于选中战区)
     echo -e "\n\033[36m📍 【第一级】正在检索 [$CONT_ID] 战区下的国家/地区...\033[0m"
-    jq -r ".continents[] | select(.id==\"$CONT_ID\") | .countries[] | \"\(.id)|\(.name)|\(.keyword_file)\"" /tmp/map.json > /tmp/countries.txt
+    jq -r ".continents[] | select(.id==\"$CONT_ID\") | .countries[] | \"\(.id)|\(.name)|\(.keyword_file)\"" "${SECURE_TMP}/map.json" > "${SECURE_TMP}/countries.txt"
     i=1; COUNTRY_MAP=(); KEYWORD_MAP=()
     while IFS="|" read -r c_id c_name k_file; do
         echo "  $i) $c_name"
         COUNTRY_MAP[$i]="$c_id"
         KEYWORD_MAP[$i]="$k_file"
         ((i++))
-    done < /tmp/countries.txt
+    done < "${SECURE_TMP}/countries.txt"
 
     read -p "请输入选择 [1-$((i-1))] (默认1): " C_SEL
     C_SEL=${C_SEL:-1}
@@ -220,11 +249,11 @@ if [ "$UPGRADE_MODE" == "false" ]; then
 
     # 📍 动态二级菜单：省/州选择 (基于选中战区和国家)
     echo -e "\n\033[36m📍 【第二级】正在检索 [$COUNTRY_ID] 的行政区数据...\033[0m"
-    jq -r ".continents[] | select(.id==\"$CONT_ID\") | .countries[] | select(.id==\"$COUNTRY_ID\") | .states[] | \"\(.id)|\(.name)\"" /tmp/map.json > /tmp/states.txt
-    STATE_COUNT=$(wc -l < /tmp/states.txt)
+    jq -r ".continents[] | select(.id==\"$CONT_ID\") | .countries[] | select(.id==\"$COUNTRY_ID\") | .states[] | \"\(.id)|\(.name)\"" "${SECURE_TMP}/map.json" > "${SECURE_TMP}/states.txt"
+    STATE_COUNT=$(wc -l < "${SECURE_TMP}/states.txt")
 
     if [ "$STATE_COUNT" -eq 1 ]; then
-        IFS="|" read -r STATE_ID STATE_NAME < /tmp/states.txt
+        IFS="|" read -r STATE_ID STATE_NAME < "${SECURE_TMP}/states.txt"
         echo -e "\033[32m💡 该国家下仅有单一配置 [$STATE_NAME]，已自动跃迁。\033[0m"
     else
         i=1; STATE_MAP=()
@@ -232,7 +261,7 @@ if [ "$UPGRADE_MODE" == "false" ]; then
             echo "  $i) $s_name"
             STATE_MAP[$i]="$s_id"
             ((i++))
-        done < /tmp/states.txt
+        done < "${SECURE_TMP}/states.txt"
         read -p "请输入选择 [1-$((i-1))] (默认1): " S_SEL
         S_SEL=${S_SEL:-1}
         STATE_ID="${STATE_MAP[$S_SEL]}"
@@ -240,26 +269,28 @@ if [ "$UPGRADE_MODE" == "false" ]; then
 
     # 📍 动态三级菜单：城市选择 (基于战区、国家、州三层过滤)
     echo -e "\n\033[36m📍 【第三级】请锁定具体城市节点:\033[0m"
-    jq -r ".continents[] | select(.id==\"$CONT_ID\") | .countries[] | select(.id==\"$COUNTRY_ID\") | .states[] | select(.id==\"$STATE_ID\") | .cities[] | \"\(.id)|\(.name)\"" /tmp/map.json > /tmp/cities.txt
-    CITY_COUNT=$(wc -l < /tmp/cities.txt)
+    jq -r ".continents[] | select(.id==\"$CONT_ID\") | .countries[] | select(.id==\"$COUNTRY_ID\") | .states[] | select(.id==\"$STATE_ID\") | .cities[] | \"\(.id)|\(.name)\"" "${SECURE_TMP}/map.json" > "${SECURE_TMP}/cities.txt"
+    CITY_COUNT=$(wc -l < "${SECURE_TMP}/cities.txt")
 
     if [ "$CITY_COUNT" -eq 1 ]; then
-        IFS="|" read -r CITY_ID CITY_NAME < /tmp/cities.txt
+        IFS="|" read -r CITY_ID CITY_NAME < "${SECURE_TMP}/cities.txt"
         echo -e "\033[32m💡 该区域下仅有单一城市 [$CITY_NAME]，已自动锁定。\033[0m"
     else
-        i=1; CITY_MAP=()
+        i=1; CITY_MAP=(); CITY_NAME_MAP=()
         while IFS="|" read -r c_id c_name; do
             echo "  $i) $c_name"
             CITY_MAP[$i]="$c_id"
+            CITY_NAME_MAP[$i]="$c_name"
             ((i++))
-        done < /tmp/cities.txt
+        done < "${SECURE_TMP}/cities.txt"
         read -p "请输入选择 [1-$((i-1))] (默认1): " CI_SEL
         CI_SEL=${CI_SEL:-1}
         CITY_ID="${CITY_MAP[$CI_SEL]}"
+        CITY_NAME="${CITY_NAME_MAP[$CI_SEL]}"
     fi
 
     # 清理临时文件 (增加清理 continents.txt)
-    rm -f /tmp/map.json /tmp/continents.txt /tmp/countries.txt /tmp/states.txt /tmp/cities.txt
+    rm -f "${SECURE_TMP}/map.json" "${SECURE_TMP}/continents.txt" "${SECURE_TMP}/countries.txt" "${SECURE_TMP}/states.txt" "${SECURE_TMP}/cities.txt"
 
     # 本地工作目录初始化 (支持 v3.0 的深度层级)
     mkdir -p "${INSTALL_DIR}/core"
@@ -277,32 +308,60 @@ if [ "$UPGRADE_MODE" == "false" ]; then
     read -p "请输入选择 [y/n] (默认n): " TG_CHOICE
     TG_TOKEN=""
     CHAT_ID=""
-    TG_API_URL=""
     AGENT_PORT="9527"
-    ENABLE_OTA="false"
     if [[ "$TG_CHOICE" =~ ^[Yy]$ ]]; then
-        read -p "请输入您的 Telegram Bot Token: " USER_TOKEN
-        while [ -z "$USER_TOKEN" ]; do
-            read -p "⚠️ Token 不能为空，请重新输入您的 Bot Token: " USER_TOKEN
-        done
-
-        TG_TOKEN="$USER_TOKEN"
-        TG_API_URL="https://api.telegram.org/bot${TG_TOKEN}/sendMessage"
-        echo -e "\033[32m✅ 已记录您的私有机器人 Token。\033[0m"
-
-        echo -e "\n\033[36m[4.1/7] OTA 远程静默升级授权\033[0m"
-        echo -e "💡 开启后，您可以在 TG 面板一键将本节点热更新至最新版本。"
-        read -p "是否允许本节点接收 OTA 升级指令？(y/n, 默认y): " OTA_CHOICE
-        if [[ "$OTA_CHOICE" =~ ^[Nn]$ ]]; then
+        echo -e "\n请选择中枢接入模式 (推荐私有部署，支持后续 OTA 远程静默升级):"
+        echo "  1) 🛡️ 私有独立中枢 (需提供自建 Bot Token，推荐)"
+        echo "  2) ☁️ 官方公共网关 (@PrivateMasterOnly，新手免配置)"
+        read -p "请输入选择 [1-2] (默认1): " MASTER_TYPE
+        MASTER_TYPE=1
+        
+        if [ "$MASTER_TYPE" == "__disabled_shared_gateway__" ]; then
+            TG_TOKEN="DISABLED_SHARED_GATEWAY_MODE" 
+            TG_API_URL="" 
             ENABLE_OTA="false"
-            echo -e "🛡️ \033[33m已关闭 OTA 权限，本节点未来将只能通过 SSH 手动升级。\033[0m"
+            echo -e "\033[32m✅ 已自动连接官方安全网关 (@PrivateMasterOnly)。\033[0m"
+            echo -e "\033[33m👉 请确保您已在 TG 中关注官方机器人并发送过 /start，否则将无法接收消息。\033[0m"
+            # [v3.6.0 安全熔断]
+            echo -e "\n\033[33m⚠️ 【安全熔断提示】\033[0m"
+            echo -e "\033[33m由于您使用了官方公共网关，为防止潜在的滥用或供应链风险，本节点的 [OTA 远程升级] 权限已被系统底层强制禁用。\033[0m"
+            echo -e "\033[33m💡 若未来需要启用 OTA，请自建私有中枢后重新部署本节点。\033[0m"
         else
-            ENABLE_OTA="true"
-            echo -e "✅ \033[32m已开启 OTA 权限，核按钮已挂载至您的私有中枢。\033[0m"
+            # [v3.6.0 优化] 使用 OSC 8 终端超链接协议，实现“点击即打开”的极客交互
+            echo -e "\n\033[36m📘 私有 Bot 创建教程: \033[4m\033]8;;https://blog.iot-architect.com/engineering-practice/create-private-telegram-bot-via-botfather/\033\\👉 [点击此处直接在浏览器中打开] 👈\033]8;;\033\\\033[0m"
+            echo -e "\033[90m   (若您的终端较老不支持点击，请手动复制: https://blog.iot-architect.com/engineering-practice/create-private-telegram-bot-via-botfather/ )\033[0m"
+            read -p "请输入您的私有 Telegram Bot Token: " RAW_TOKEN
+            USER_TOKEN=$(echo "$RAW_TOKEN" | tr -cd 'a-zA-Z0-9_:-')
+            # 🛡️ 核心防误触修复：拦截空回车或粘贴换行导致的跳过 Bug
+            while [ -z "$USER_TOKEN" ]; do
+                read -p "⚠️ Token 不能为空或包含非法字符，请重新输入: " RAW_TOKEN
+                USER_TOKEN=$(echo "$RAW_TOKEN" | tr -cd 'a-zA-Z0-9_:-')
+            done
+            
+            TG_TOKEN="$USER_TOKEN"
+            TG_API_URL="https://api.telegram.org/bot${TG_TOKEN}/sendMessage"
+            echo -e "\033[32m✅ 已记录您的私有机器人 Token。\033[0m"
+            
+            # [v3.6.0] 私有模式开放 OTA 授权向导
+            echo -e "\n\033[36m[4.1/7] OTA 远程静默升级授权\033[0m"
+            echo -e "💡 开启后，您可以在 TG 面板一键将本节点热更新至最新版本。"
+            read -p "是否允许本节点接收 OTA 升级指令？(y/n, 默认y): " OTA_CHOICE
+            if [[ "$OTA_CHOICE" =~ ^[Nn]$ ]]; then
+                ENABLE_OTA="false"
+                echo -e "🛡️ \033[33m已关闭 OTA 权限，本节点未来将只能通过 SSH 手动升级。\033[0m"
+            else
+                ENABLE_OTA="true"
+                echo -e "✅ \033[32m已开启 OTA 权限，核按钮已挂载至您的私有中枢。\033[0m"
+            fi
         fi
 
-        read -p "请输入你的 Chat ID (必须准确，否则无法联控): " CHAT_ID
-
+        echo -e "\n\033[33m💡 提示：如果您不知道下方自己的 Chat ID 是什么，可以关注 @userinfobot 获取。\033[0m"
+        echo -e "\033[36m📘 查看图文教程: \033[4m\033]8;;https://blog.iot-architect.com/engineering-practice/get-telegram-personal-id-via-userinfobot/\033\\👉 [点击此处直接在浏览器中打开] 👈\033]8;;\033\\\033[0m"
+        echo -e "\033[90m   (若您的终端较老不支持点击，请手动复制: https://blog.iot-architect.com/engineering-practice/get-telegram-personal-id-via-userinfobot/ )\033[0m"
+        read -p "请输入你的 Chat ID (必须准确，否则无法联控): " RAW_CHAT_ID
+        # 强制只保留数字和负号，封死注入
+        CHAT_ID=$(echo "$RAW_CHAT_ID" | tr -cd '0-9-')
+        
         # ================== [v3.0.3 变更: 智能随机高位端口生成系统] ==================
         echo -e "\n\033[36m[4.2/7] 正在构建 Webhook 安全通信隧道...\033[0m"
         echo -n "🎲 正在探测可用随机端口..."
@@ -315,13 +374,13 @@ if [ "$UPGRADE_MODE" == "false" ]; then
             echo -n "."
         done
         echo -e " 完成！"
-
+        
         echo -e "💡 系统为您生成的推荐随机高位端口为: \033[32m$RANDOM_PORT\033[0m"
         echo -e "\033[33m(该端口已通过本地占用校验，可直接使用)\033[0m"
-
+        
         while true; do
             read -p "请输入 Webhook 监听端口 (回车采用推荐, 或手动输入): " INPUT_PORT
-
+            
             if [ -z "$INPUT_PORT" ]; then
                 AGENT_PORT="$RANDOM_PORT"
                 break
@@ -359,7 +418,8 @@ if [ "$UPGRADE_MODE" == "false" ]; then
 
     if [ ${#IP_OPTIONS[@]} -eq 0 ]; then
         echo -e "\033[33m⚠️ 雷达受阻：未能自动探测到公网 IP，请手动指定。\033[0m"
-        read -p "请输入您要绑定的公网 IP (v4 或 v6): " PUBLIC_IP
+        read -p "请输入您要绑定的公网 IP (v4 或 v6): " RAW_PUBLIC_IP
+        PUBLIC_IP=$(echo "$RAW_PUBLIC_IP" | tr -cd 'a-fA-F0-9.:[]')
         [[ "$PUBLIC_IP" == *":"* ]] && IP_PREF="6" || IP_PREF="4"
     else
         echo "📍 发现可用出口 IP，请选择要注册与养护的锚点:"
@@ -373,10 +433,10 @@ if [ "$UPGRADE_MODE" == "false" ]; then
         done
         CUSTOM_OPT=$(( ${#IP_OPTIONS[@]} + 1 ))
         echo "  $CUSTOM_OPT) ✍️ 手动指定其他 IP (适合多 IP 站群机)"
-
+        
         read -p "请输入选择 (默认1): " IP_CHOICE
         IP_CHOICE=${IP_CHOICE:-1}
-
+        
         if [ "$IP_CHOICE" -le "${#IP_OPTIONS[@]}" ] && [ "$IP_CHOICE" -gt 0 ]; then
             idx=$((IP_CHOICE-1))
             PUBLIC_IP="${IP_OPTIONS[$idx]}"
@@ -402,14 +462,14 @@ if [ "$UPGRADE_MODE" == "false" ]; then
     # 2. 实弹打靶测试 (NAT 环境嗅探与双栈自适应)
     echo -n "🕵️ 正在进行出站链路试射 (NAT环境与双栈嗅探)..."
     RAW_TEST_IP=$(echo "$SAFE_PUBLIC_IP" | tr -d '[]')
-
+    
     # 智能切换靶机：V6 机器打 Cloudflare V6 节点，V4 机器打 1.1.1.1
     if [[ "$RAW_TEST_IP" == *":"* ]]; then
         TEST_TARGET="https://[2606:4700:4700::1111]"
     else
         TEST_TARGET="https://1.1.1.1"
     fi
-
+    
     # 执行实弹试射
     if curl --interface "$RAW_TEST_IP" -sI -m 3 "$TEST_TARGET" >/dev/null 2>&1; then
         echo -e " \033[32m✅ 原生直连，物理网卡死锁已激活。\033[0m"
@@ -479,7 +539,7 @@ AGENT_PORT="$AGENT_PORT"
 INSTALL_DIR="$INSTALL_DIR"
 LOG_FILE="${INSTALL_DIR}/logs/sentinel.log"
 
-# [v3.3.1修改: 双核身份剥离配置]
+# [v3.3.1修改: 双核身份剥离配置] 
 IP_PREF="$IP_PREF"
 PUBLIC_IP="$SAFE_PUBLIC_IP"
 BIND_IP="$BIND_IP"
@@ -503,11 +563,11 @@ fi
 if [ "$UPGRADE_MODE" == "true" ]; then
     if ! grep -q "PUBLIC_IP=" "$CONFIG_FILE"; then
         echo -e "\n🔄 [平滑迁移] 正在对老节点进行 v3.3.1 双核身份架构升级..."
-
+        
         # 重新抓取公网面孔 (应对老节点 BIND_IP 可能已被手动清空的情况)
         MIGRATE_IP=$(curl -${IP_PREF:-4} -s -m 5 api.ip.sb/ip | tr -d '[:space:]')
         [[ "$MIGRATE_IP" == *":"* ]] && [[ "$MIGRATE_IP" != *"["* ]] && MIGRATE_IP="[${MIGRATE_IP}]"
-
+        
         echo -n "🕵️ 正在进行补发链路试射 (NAT与双栈嗅探)..."
         RAW_TEST_IP=$(echo "$MIGRATE_IP" | tr -d '[]')
         if [[ "$RAW_TEST_IP" == *":"* ]]; then
@@ -515,7 +575,7 @@ if [ "$UPGRADE_MODE" == "true" ]; then
         else
             TEST_TARGET="https://1.1.1.1"
         fi
-
+        
         if curl --interface "$RAW_TEST_IP" -sI -m 3 "$TEST_TARGET" >/dev/null 2>&1; then
             echo -e " \033[32m✅ 原生直连，网卡死锁已继承。\033[0m"
             NEW_BIND_IP="$MIGRATE_IP"
@@ -523,17 +583,18 @@ if [ "$UPGRADE_MODE" == "true" ]; then
             echo -e " \033[33m⚠️ 发现 NAT 架构，已自动卸除老版本的物理枷锁。\033[0m"
             NEW_BIND_IP=""
         fi
-
+        
         # 动态修改旧配置文件 (更新 BIND_IP，追加 PUBLIC_IP)
         sed -i "s/^BIND_IP=.*/BIND_IP=\"$NEW_BIND_IP\"/" "$CONFIG_FILE"
         echo "PUBLIC_IP=\"$MIGRATE_IP\"" >> "$CONFIG_FILE"
-
+        
         # 刷新当前安装脚本的环境变量，防止底部代码报错
         SAFE_PUBLIC_IP="$MIGRATE_IP"
         BIND_IP="$NEW_BIND_IP"
     else
         # 如果是未来再升级，配置文件已是最新，直接提取变量供安装脚本尾部使用
-        SAFE_PUBLIC_IP=$(grep "^PUBLIC_IP=" "$CONFIG_FILE" | cut -d'"' -f2)
+        # [修复] 避免 cut 提取无引号变量失败，直接复用已 source 的原生变量
+        SAFE_PUBLIC_IP="${PUBLIC_IP}"
     fi
 
     # [v3.5.2 热修复] 兼容老版本没有 NODE_NAME 和 NODE_ALIAS 的情况，无损补齐
@@ -562,114 +623,345 @@ if [ "$UPGRADE_MODE" == "true" ]; then
 fi
 # ========================================================================
 
-# 6. 拉取全套组件 (按需下载，绝不浪费空间)
-echo -e "\n[6/7] 正在根据模块开关部署核心引擎与热数据..."
-# 确保目录在升级模式下也能被正确建立
-mkdir -p "${INSTALL_DIR}/core"
+# 6. 拉取全套组件 (原子化升级，防断网变砖)
+echo -e "\n[6/7] 正在部署核心引擎与热数据..."
 mkdir -p "${INSTALL_DIR}/data/keywords"
 
-# 基础公共组件
-curl -sL "${REPO_RAW_URL}/core/runner.sh" -o "${INSTALL_DIR}/core/runner.sh"
-curl -sL "${REPO_RAW_URL}/core/updater.sh" -o "${INSTALL_DIR}/core/updater.sh"
-curl -sL "${REPO_RAW_URL}/core/tg_report.sh" -o "${INSTALL_DIR}/core/tg_report.sh"
-curl -sL "${REPO_RAW_URL}/core/agent_daemon.sh" -o "${INSTALL_DIR}/core/agent_daemon.sh"
-curl -sL "${REPO_RAW_URL}/core/uninstall.sh" -o "${INSTALL_DIR}/core/uninstall.sh"
-curl -sL "${REPO_RAW_URL}/data/user_agents.txt" -o "${INSTALL_DIR}/data/user_agents.txt"
+# [核心修复] 开辟临时下载区，确保下载 100% 成功后再替换旧核心
+TMP_CORE="${SECURE_TMP}/core_update"
+mkdir -p "$TMP_CORE"
 
-# 动态按需组件
-if [ "$ENABLE_GOOGLE" == "true" ]; then
-    curl -sL "${REPO_RAW_URL}/core/mod_google.sh" -o "${INSTALL_DIR}/core/mod_google.sh"
-    # [v3.2.2 修复] 动态匹配词库下载逻辑
-    if [ "$UPGRADE_MODE" == "false" ]; then
-        curl -sL "${REPO_RAW_URL}/data/keywords/${KEYWORD_FILE}" -o "${INSTALL_DIR}/data/keywords/${KEYWORD_FILE}"
-    else
-        # 升级模式：利用已有的 REGION_CODE 更新通用词库
-        curl -sL "${REPO_RAW_URL}/data/keywords/kw_${REGION_CODE}.txt" -o "${INSTALL_DIR}/data/keywords/kw_${REGION_CODE}.txt" 2>/dev/null || true
-    fi
+# 拉取核心代码至临时区
+curl -sL "${REPO_RAW_URL}/core/runner.sh" -o "${TMP_CORE}/runner.sh"
+curl -sL "${REPO_RAW_URL}/core/updater.sh" -o "${TMP_CORE}/updater.sh"
+curl -sL "${REPO_RAW_URL}/core/tg_report.sh" -o "${TMP_CORE}/tg_report.sh"
+curl -sL "${REPO_RAW_URL}/core/agent_daemon.sh" -o "${TMP_CORE}/agent_daemon.sh"
+curl -sL "${REPO_RAW_URL}/core/uninstall.sh" -o "${TMP_CORE}/uninstall.sh"
+curl -sL "${REPO_RAW_URL}/core/mod_google.sh" -o "${TMP_CORE}/mod_google.sh"
+curl -sL "${REPO_RAW_URL}/core/mod_trust.sh" -o "${TMP_CORE}/mod_trust.sh"
+curl -sL "${REPO_RAW_URL}/core/mod_quality.sh" -o "${TMP_CORE}/mod_quality.sh"
+
+# 🛡️ 防砖终极校验：检查关键文件是否真实存在且不为空
+if [ ! -s "${TMP_CORE}/runner.sh" ] || [ ! -s "${TMP_CORE}/agent_daemon.sh" ]; then
+    echo -e "\033[31m❌ 致命错误：核心代码拉取失败！网络阻断或 GitHub Raw 异常。\033[0m"
+    echo "🛡️ 防砖机制触发：已中止覆盖，旧版哨兵引擎仍安全存活中。"
+    rm -rf "$TMP_CORE"
+    exit 1
 fi
 
-if [ "$ENABLE_TRUST" == "true" ]; then
-    curl -sL "${REPO_RAW_URL}/core/mod_trust.sh" -o "${INSTALL_DIR}/core/mod_trust.sh"
+# 🟢 [原子化交接核心]: 校验完美通过，新代码已在本地备妥！
+# 此时再以雷霆手段镇压旧进程，杜绝遗言陷阱与断网变砖的可能！
+echo "⏳ 新引擎校验通过，正在抹杀旧版守护进程..."
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl kill --signal=SIGKILL ip-sentinel-agent-daemon.service >/dev/null 2>&1 || true
+    systemctl stop ip-sentinel-runner.timer ip-sentinel-updater.timer ip-sentinel-report.timer ip-sentinel-agent-daemon.service >/dev/null 2>&1 || true
 fi
+pkill -9 -f "webhook.py" >/dev/null 2>&1 || true
+pkill -9 -f "agent_daemon.sh" >/dev/null 2>&1 || true
+pkill -9 -f "runner.sh" >/dev/null 2>&1 || true
+pkill -9 -f "tg_report.sh" >/dev/null 2>&1 || true
 
+# 执行代码目录的物理替换
+rm -rf "${INSTALL_DIR}/core" 2>/dev/null
+mv "$TMP_CORE" "${INSTALL_DIR}/core"
 chmod +x ${INSTALL_DIR}/core/*.sh
 
-# 7. 配置系统定时任务 (高频调度与看门狗)
-echo -e "\n[7/7] 正在注入系统定时任务与看门狗进程..."
-crontab -l 2>/dev/null | grep -v "ip_sentinel" > /tmp/cron_backup || true
-
-# 核心养护模块: 每 30 分钟触发一次
-echo "*/30 * * * * ${INSTALL_DIR}/core/runner.sh >/dev/null 2>&1" >> /tmp/cron_backup
-# 养料更新模块: (v3.3.0升级) 每天凌晨 3 点触发，由中枢自动进行分频调度
-echo "0 3 * * * ${INSTALL_DIR}/core/updater.sh >/dev/null 2>&1" >> /tmp/cron_backup
-
-# [v3.3.0 新增] 初始化 UA 指纹库更新时间戳，确立 30 天滚动周期的计算锚点
-echo $(date +%s) > "${INSTALL_DIR}/core/.ua_last_update"
-
-# 如果配置了联控，启动 Webhook 与战报任务
-if [[ -n "$TG_TOKEN" ]] && [[ -n "$CHAT_ID" ]]; then
-    # 每天早上 8 点发送昨天的统计战报
-    echo "0 8 * * * ${INSTALL_DIR}/core/tg_report.sh >/dev/null 2>&1" >> /tmp/cron_backup
-
-    # [v3.0.1新增修改 3: 删除原来的 curl 取 IP，直接使用我们上方锁定的 BIND_IP]
-    # 并提前写入 IP 缓存，彻底阻断 agent_daemon 首次启动时的重复推送
-    # [修复竞态]: 提前写入公网 IP 缓存，彻底阻断 agent_daemon 首次启动时的抢跑推送
-    echo "$SAFE_PUBLIC_IP" > "${INSTALL_DIR}/core/.last_ip"
-
-    # 双保险守护进程看门狗
-    echo "@reboot nohup bash ${INSTALL_DIR}/core/agent_daemon.sh >/dev/null 2>&1 &" >> /tmp/cron_backup
-    echo "* * * * * nohup bash ${INSTALL_DIR}/core/agent_daemon.sh >/dev/null 2>&1 &" >> /tmp/cron_backup
-
-    # 安装时立刻启动一次边缘守护进程
-    nohup bash "${INSTALL_DIR}/core/agent_daemon.sh" >/dev/null 2>&1 &
+# 拉取热数据与词库
+curl -sL "${REPO_RAW_URL}/data/user_agents.txt" -o "${INSTALL_DIR}/data/user_agents.txt"
+if [ "$UPGRADE_MODE" == "false" ]; then
+    curl -sL "${REPO_RAW_URL}/data/keywords/${KEYWORD_FILE}" -o "${INSTALL_DIR}/data/keywords/${KEYWORD_FILE}"
+else
+    # 升级模式：利用已有的 REGION_CODE 更新通用词库
+    curl -sL "${REPO_RAW_URL}/data/keywords/kw_${REGION_CODE}.txt" -o "${INSTALL_DIR}/data/keywords/kw_${REGION_CODE}.txt" 2>/dev/null || true
 fi
 
-[ -f /tmp/cron_backup ] && crontab /tmp/cron_backup 2>/dev/null
-rm -f /tmp/cron_backup
+# 7. 配置系统定时任务 (高频调度与看门狗)
+echo -e "\n[7/7] 正在注入系统守护进程与调度器..."
+
+# [时钟同步核心] 获取部署时的绝对 UTC 时间锚点，用于打散全球节点的云端拉取并发
+DEPLOY_UTC_HOUR=$(date -u +%H)
+DEPLOY_UTC_MIN=$(date -u +%M)
+
+# [v3.3.0 新增] 初始化 UA 指纹库更新时间戳，确立 30 天滚动周期的计算锚点 (强制 UTC)
+echo $(date -u +%s) > "${INSTALL_DIR}/core/.ua_last_update"
+
+if command -v systemctl >/dev/null 2>&1; then
+    echo "💡 检测到 Systemd 环境，正在部署原生守护服务..."
+    
+    # 1. Runner 核心养护模块服务与定时器
+    cat > /etc/systemd/system/ip-sentinel-runner.service << EOF
+[Unit]
+Description=IP-Sentinel Runner Service
+After=network.target
+[Service]
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+SyslogIdentifier=ip-sentinel
+Type=oneshot
+ExecStart=/bin/bash ${INSTALL_DIR}/core/runner.sh
+User=root
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+EOF
+
+    cat > /etc/systemd/system/ip-sentinel-runner.timer << EOF
+[Unit]
+Description=Timer for IP-Sentinel Runner Service
+[Timer]
+# [频率优化] 改用严格的 20 分钟步进，杜绝 OTA 瞬间的并发走火！
+OnCalendar=*:0/20
+RandomizedDelaySec=180
+Persistent=true
+Unit=ip-sentinel-runner.service
+[Install]
+WantedBy=timers.target
+EOF
+
+    # 2. Updater 养料更新模块服务与定时器
+    cat > /etc/systemd/system/ip-sentinel-updater.service << EOF
+[Unit]
+Description=IP-Sentinel Updater Service
+After=network.target
+[Service]
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+SyslogIdentifier=ip-sentinel
+Type=oneshot
+ExecStart=/bin/bash ${INSTALL_DIR}/core/updater.sh
+User=root
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+EOF
+
+    cat > /etc/systemd/system/ip-sentinel-updater.timer << EOF
+[Unit]
+Description=Timer for IP-Sentinel Updater Service
+[Timer]
+# [绝对 UTC 锚点] 每天精确在部署的时刻触发，实现全球请求的天然削峰
+OnCalendar=*-*-* ${DEPLOY_UTC_HOUR}:${DEPLOY_UTC_MIN}:00 UTC
+Persistent=true
+Unit=ip-sentinel-updater.service
+[Install]
+WantedBy=timers.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable --now ip-sentinel-runner.timer ip-sentinel-updater.timer
+
+    if [[ -n "$TG_TOKEN" ]] && [[ -n "$CHAT_ID" ]]; then
+        # 3. TG 战报服务与定时器
+        cat > /etc/systemd/system/ip-sentinel-report.service << EOF
+[Unit]
+Description=IP-Sentinel Telegram Report Service
+After=network.target
+[Service]
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+SyslogIdentifier=ip-sentinel
+Type=oneshot
+ExecStart=/bin/bash ${INSTALL_DIR}/core/tg_report.sh
+User=root
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+EOF
+
+        cat > /etc/systemd/system/ip-sentinel-report.timer << EOF
+[Unit]
+Description=Timer for IP-Sentinel Telegram Report Service
+[Timer]
+# [绝对 UTC 锚点] 全球统一：每天 UTC 16:00 准时向司令部发送战报
+OnCalendar=*-*-* 16:00:00 UTC
+Unit=ip-sentinel-report.service
+[Install]
+WantedBy=timers.target
+EOF
+
+        # 4. [排雷修复] Agent Daemon Webhook 监听守护服务 (Type=simple, 常驻执行)
+        cat > /etc/systemd/system/ip-sentinel-agent-daemon.service << EOF
+[Unit]
+Description=IP-Sentinel Agent Daemon Service
+After=network.target
+[Service]
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+SyslogIdentifier=ip-sentinel
+Type=simple
+ExecStart=/bin/bash ${INSTALL_DIR}/core/agent_daemon.sh
+Restart=always
+RestartSec=5
+User=root
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+[Install]
+WantedBy=multi-user.target
+EOF
+
+        # [修复竞态]: 提前写入公网 IP 缓存，阻断重复推送
+        # 强制使用无参数 curl 裸奔探测，对齐 agent_daemon 的认知，防止双栈机型 IPv4/v6 认知错乱导致重启误报
+        DAEMON_IP=$( (curl -s -m 5 api.ip.sb/ip || curl -s -m 5 ifconfig.me) 2>/dev/null | tr -d '[:space:]' )
+        [ -n "$DAEMON_IP" ] && echo "$DAEMON_IP" > "${INSTALL_DIR}/core/.last_ip" || echo "$(echo "$SAFE_PUBLIC_IP" | tr -d '[]')" > "${INSTALL_DIR}/core/.last_ip"
+        
+        systemctl daemon-reload
+        systemctl enable --now ip-sentinel-report.timer
+        systemctl enable --now ip-sentinel-agent-daemon.service
+    fi
+    else
+        echo "💡 未检测到 Systemd，正在配置备用调度器 (兼容 Alpine/OpenRC)..."
+        
+        # ==========================================
+        # 🛑 智能环境嗅探: 判定是否为受限的 Alpine 容器环境
+        # ==========================================
+        IS_RESTRICTED_ALPINE="false"
+        if [ -f /etc/alpine-release ]; then
+            # 探测虚拟化类型：/proc/vz(OpenVZ), environ包含lxc(LXC), /.dockerenv(Docker)
+            if [ -d /proc/vz ] || grep -qa container=lxc /proc/1/environ 2>/dev/null || [ -f /.dockerenv ]; then
+                IS_RESTRICTED_ALPINE="true"
+            fi
+        fi
+
+        if [ "$IS_RESTRICTED_ALPINE" == "true" ]; then
+            echo -e "⚠️ 探测到受限的 LXC/OpenVZ Alpine 环境，系统自带 Cron 极易假死。"
+            echo -e "🔧 自动降维打击：启用 [自定义高可用死循环调度器] 接管全局任务..."
+            
+            # 1. 禁用原有的 Cron 大管家 (防止冲突)
+            rc-update del crond default >/dev/null 2>&1 || true
+            rc-service crond stop >/dev/null 2>&1 || true
+            pkill -9 crond >/dev/null 2>&1 || true
+            crontab -l 2>/dev/null | grep -v "ip_sentinel" > "${SECURE_TMP}/cron_clean" || true
+            [ -f "${SECURE_TMP}/cron_clean" ] && crontab "${SECURE_TMP}/cron_clean" >/dev/null 2>&1
+            rm -f "${SECURE_TMP}/cron_clean"
+
+            # 2. 写入我们的死循环守护进程
+            # [极客修复] 将 << 'EOF' 变为 << EOF，以允许在安装时将部署时刻的 DEPLOY_UTC 变量作为硬编码注入脚本中
+            cat > ${INSTALL_DIR}/core/sentinel_scheduler.sh << EOF
+#!/bin/bash
+while true; do
+    # 强制获取绝对 UTC 时分，免疫系统错误时区
+    MIN=\$(date -u +%M)
+    HOUR=\$(date -u +%H)
+    # [频率优化] 匹配 20 分钟步进 (00, 20, 40)
+    if [ "\$MIN" == "00" ] || [ "\$MIN" == "20" ] || [ "\$MIN" == "40" ]; then
+        /bin/bash /opt/ip_sentinel/core/runner.sh >/dev/null 2>&1
+    fi
+    # [绝对 UTC 锚点] 基于部署时刻的锚点触发热数据更新，天然并发削峰
+    if [ "\$HOUR" == "${DEPLOY_UTC_HOUR}" ] && [ "\$MIN" == "${DEPLOY_UTC_MIN}" ]; then
+        /bin/bash /opt/ip_sentinel/core/updater.sh >/dev/null 2>&1
+    fi
+    # [绝对 UTC 锚点] 统一 UTC 16:00 发送战报
+    if [ "\$HOUR" == "16" ] && [ "\$MIN" == "00" ]; then
+        /bin/bash /opt/ip_sentinel/core/tg_report.sh >/dev/null 2>&1
+    fi
+    if ! pgrep -f 'webhook.py' >/dev/null; then
+        /bin/bash /opt/ip_sentinel/core/agent_daemon.sh >/dev/null 2>&1 &
+    fi
+    sleep 60
+done
+EOF
+            chmod +x ${INSTALL_DIR}/core/sentinel_scheduler.sh
+
+            # 3. 写入 OpenRC 开机自启
+            if command -v rc-update >/dev/null 2>&1 && [ -d "/etc/local.d" ]; then
+                echo "nohup bash ${INSTALL_DIR}/core/sentinel_scheduler.sh >/dev/null 2>&1 &" > /etc/local.d/ip_sentinel_scheduler.start
+                chmod +x /etc/local.d/ip_sentinel_scheduler.start
+                rc-update add local default >/dev/null 2>&1
+            else
+                # 连 OpenRC 都没有的极端环境，写入 profile 兜底
+                grep -q "sentinel_scheduler" /etc/profile || echo "nohup bash ${INSTALL_DIR}/core/sentinel_scheduler.sh >/dev/null 2>&1 &" >> /etc/profile
+            fi
+            
+            # 4. 立即后台启动
+            [ -n "$PUBLIC_IP" ] && echo "$PUBLIC_IP" > "${INSTALL_DIR}/core/.last_ip"
+            nohup bash ${INSTALL_DIR}/core/sentinel_scheduler.sh >/dev/null 2>&1 &
+            
+        else
+            # ==========================================
+            # 🟢 走常规调度路线 (正常的 Linux 或 KVM 型 Alpine)
+            # ==========================================
+            crontab -l 2>/dev/null | grep -v "ip_sentinel" > "${SECURE_TMP}/cron_backup" || true
+            # [频率优化] 调整为 */20
+            echo "*/20 * * * * ${INSTALL_DIR}/core/runner.sh >/dev/null 2>&1" >> "${SECURE_TMP}/cron_backup"
+            # [绝对 UTC 锚点] 每天精确在部署的 UTC 时刻触发
+            echo "${DEPLOY_UTC_MIN} ${DEPLOY_UTC_HOUR} * * * ${INSTALL_DIR}/core/updater.sh >/dev/null 2>&1" >> "${SECURE_TMP}/cron_backup"
+            
+            if [[ -n "$TG_TOKEN" ]] && [[ -n "$CHAT_ID" ]]; then
+                # [绝对 UTC 锚点] 统一 UTC 16:00
+                echo "0 16 * * * ${INSTALL_DIR}/core/tg_report.sh >/dev/null 2>&1" >> "${SECURE_TMP}/cron_backup"
+                echo "$SAFE_PUBLIC_IP" > "${INSTALL_DIR}/core/.last_ip"
+                # [修复竞态]: 提前写入公网 IP 缓存，阻断重复推送
+                # 强制使用无参数 curl 裸奔探测，对齐 agent_daemon 的认知，防止双栈机型 IPv4/v6 认知错乱导致重启误报
+                DAEMON_IP=$( (curl -s -m 5 api.ip.sb/ip || curl -s -m 5 ifconfig.me) 2>/dev/null | tr -d '[:space:]' )
+                [ -n "$DAEMON_IP" ] && echo "$DAEMON_IP" > "${INSTALL_DIR}/core/.last_ip" || echo "$(echo "$SAFE_PUBLIC_IP" | tr -d '[]')" > "${INSTALL_DIR}/core/.last_ip"
+                
+                if command -v rc-update >/dev/null 2>&1 && [ -d "/etc/local.d" ]; then
+                    echo "nohup bash ${INSTALL_DIR}/core/agent_daemon.sh >/dev/null 2>&1 &" > /etc/local.d/ip_sentinel.start
+                    chmod +x /etc/local.d/ip_sentinel.start
+                    rc-update add local default >/dev/null 2>&1
+                else
+                    echo "@reboot nohup bash ${INSTALL_DIR}/core/agent_daemon.sh >/dev/null 2>&1 &" >> "${SECURE_TMP}/cron_backup"
+                fi
+                
+                echo "* * * * * pgrep -f 'webhook.py' >/dev/null || nohup bash ${INSTALL_DIR}/core/agent_daemon.sh >/dev/null 2>&1 &" >> "${SECURE_TMP}/cron_backup"
+                
+                nohup bash "${INSTALL_DIR}/core/agent_daemon.sh" >/dev/null 2>&1 &
+            fi
+            
+            [ -f "${SECURE_TMP}/cron_backup" ] && crontab "${SECURE_TMP}/cron_backup" >/dev/null 2>&1
+            
+            if [ -d "/etc/crontabs" ] && [ -f "/var/spool/cron/crontabs/root" ]; then
+                cp -f /var/spool/cron/crontabs/root /etc/crontabs/root 2>/dev/null || true
+                chmod 600 /etc/crontabs/root 2>/dev/null || true
+            fi
+            
+            if command -v rc-service >/dev/null 2>&1; then
+                rc-service crond restart >/dev/null 2>&1 || crond -b >/dev/null 2>&1
+            else
+                pkill -9 crond 2>/dev/null || true
+                crond -b >/dev/null 2>&1 || true
+            fi
+            
+            rm -f "${SECURE_TMP}/cron_backup"
+        fi
+    fi
 
 # ================== [v3.4.0 核心: 状态机驱动的热更新路由] ==================
 if [[ -n "$TG_TOKEN" ]] && [[ -n "$CHAT_ID" ]]; then
-
+    
     # [v3.6.0 核心] 发送携带全套身份属性的注册指令 (追加 ENABLE_OTA 作为第 7 个字段)
     REG_MSG="#REGISTER#|${REGION_CODE}|${NODE_NAME}|${SAFE_PUBLIC_IP}|${AGENT_PORT}|${NODE_ALIAS}|${ENABLE_OTA}"
-
+    
     if [ "$UPGRADE_MODE" == "true" ]; then
         # 读取本地老版本号，如果没有则视为远古版本 v3.3.1
         OLD_VERSION=$(grep "^AGENT_VERSION=" "$CONFIG_FILE" | cut -d'"' -f2)
         [ -z "$OLD_VERSION" ] && OLD_VERSION="3.3.1"
-
+        
         # [路由表 1]: 跨代兼容 (老版本 < v3.3.2)
-        # 必须强制下发带有 #REGISTER# 的警告，引导长官重新同步哈希身份
         if version_lt "$OLD_VERSION" "3.3.2"; then
             echo -e "\n📡 [路由枢纽] 正在执行跨代架构重组 (v${OLD_VERSION} -> v${TARGET_VERSION})..."
-            curl -s -X POST "${TG_API_URL}" \
-                -d "chat_id=${CHAT_ID}" \
-                -d "parse_mode=Markdown" \
-                -d "text=✨ *IP-Sentinel 引擎热更新完成！*
+            TEXT_MSG="✨ *IP-Sentinel 引擎热更新完成！*
 📍 节点：\`${NODE_ALIAS}\`
 🌐 IP：\`${SAFE_PUBLIC_IP}\`
 🚀 状态：v${TARGET_VERSION} OTA 动态活体引擎已部署
 
 ⚠️ *战区架构已重组，请务必点击下方指令并发送，以同步新的防撞档案：*
-\`${REG_MSG}\`" >/dev/null 2>&1
+\`${REG_MSG}\`"
+            
+            # [v4.0.3 体验升级] 注入交互式控制台按钮
+            JSON_PAYLOAD=$(jq -n --arg cid "$CHAT_ID" --arg txt "$TEXT_MSG" --arg cb "manage:${NODE_NAME}" '{chat_id: $cid, text: $txt, parse_mode: "Markdown", reply_markup: {inline_keyboard: [[{text: "⚙️ 调出该节点控制台", callback_data: $cb}]]}}')
+            curl -s -X POST "${TG_API_URL}" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" >/dev/null 2>&1
+            
             echo -e "\033[32m✅ 升级通知已推送！请前往 TG 点击注册指令完成身份同步！\033[0m"
-
-        # [路由表 2]: 现代升级也主动补发身份同步指令，确保别名与 OTA 能力入库
+            
+        # [路由表 2]: 现代静默升级 (老版本 >= v3.3.2)
         else
             echo -e "\n📡 [路由枢纽] 正在执行静默平滑升级 (v${OLD_VERSION} -> v${TARGET_VERSION})..."
-            curl -s -X POST "${TG_API_URL}" \
-                -d "chat_id=${CHAT_ID}" \
-                -d "parse_mode=Markdown" \
-                -d "text=✨ *IP-Sentinel 引擎热更新完成！*
+            TEXT_MSG="✨ *IP-Sentinel 引擎热更新完成！*
 📍 节点：\`${NODE_ALIAS}\`
 🌐 IP：\`${SAFE_PUBLIC_IP}\`
-🚀 状态：v${TARGET_VERSION} OTA 动态活体引擎已部署
+🚀 状态：v${TARGET_VERSION} OTA 动态活体引擎已部署"
 
-🧩 *检测到新版身份字段已更新，请点击下方指令并发送，以同步节点别名与 OTA 权限：*
-\`${REG_MSG}\`" >/dev/null 2>&1
-            echo -e "\033[32m✅ 升级通知已推送！请前往 TG 点击注册指令完成身份同步！\033[0m"
+            # [v4.0.3 体验升级] 注入交互式控制台按钮
+            JSON_PAYLOAD=$(jq -n --arg cid "$CHAT_ID" --arg txt "$TEXT_MSG" --arg cb "manage:${NODE_NAME}" '{chat_id: $cid, text: $txt, parse_mode: "Markdown", reply_markup: {inline_keyboard: [[{text: "⚙️ 调出该节点控制台", callback_data: $cb}]]}}')
+            curl -s -X POST "${TG_API_URL}" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" >/dev/null 2>&1
+
+            echo -e "\033[32m✅ 升级成功通知已推送到您的 Telegram！\033[0m"
         fi
-
+        
         # [清理遗留垃圾并刷新版本号]
         sed -i '/^NAME_HASHED=/d' "$CONFIG_FILE" 2>/dev/null # 抹除上个版本的临时基因锁
         if grep -q "^AGENT_VERSION=" "$CONFIG_FILE"; then
@@ -677,25 +969,26 @@ if [[ -n "$TG_TOKEN" ]] && [[ -n "$CHAT_ID" ]]; then
         else
             echo "AGENT_VERSION=\"$TARGET_VERSION\"" >> "$CONFIG_FILE"
         fi
-
+        
     else
         # [全新安装路由]
         echo -e "\n📡 正在向指挥部发送注册暗号..."
-        PUSH_RESULT=$(curl -s -X POST "${TG_API_URL}" \
-            -d "chat_id=${CHAT_ID}" \
-            -d "parse_mode=Markdown" \
-            -d "text=✨ *IP-Sentinel 部署成功！*
+        TEXT_MSG="✨ *IP-Sentinel 部署成功！*
 📍 区域：${REGION_NAME}
 🌐 IP：${SAFE_PUBLIC_IP}
 🔌 端口：${AGENT_PORT}
 
 🔑 *请点击下方指令复制并回复给机器人：*
-\`${REG_MSG}\`")
+\`${REG_MSG}\`"
+
+        # [v4.0.3 体验升级] 注入交互式控制台按钮
+        JSON_PAYLOAD=$(jq -n --arg cid "$CHAT_ID" --arg txt "$TEXT_MSG" --arg cb "manage:${NODE_NAME}" '{chat_id: $cid, text: $txt, parse_mode: "Markdown", reply_markup: {inline_keyboard: [[{text: "⚙️ 调出该节点控制台", callback_data: $cb}]]}}')
+        PUSH_RESULT=$(curl -s -X POST "${TG_API_URL}" -H "Content-Type: application/json" -d "$JSON_PAYLOAD")
 
         if echo "$PUSH_RESULT" | grep -q '"ok":true'; then
             echo -e "\033[32m✅ 注册信息已推送到您的 Telegram，请按指令完成最终激活！\033[0m"
         else
-            echo -e "\033[31m❌ 消息推送失败，请检查 Bot Token、Chat ID 和机器人会话状态是否正确。\033[0m"
+            echo -e "\033[31m❌ 消息推送失败，请检查 Chat ID 是否正确或是否已关注机器人。\033[0m"
         fi
     fi
 fi
@@ -708,10 +1001,10 @@ else
     echo "🎉 边缘节点 (Agent) 部署流程彻底完成！"
 fi
 echo "📍 你的本地守护区域已锁定为: $REGION_NAME"
-echo "⚙️ 哨兵现已开启 [每30分钟] 的高频高拟真养护循环。"
+echo "⚙️ 哨兵现已开启 [每20分钟] 的高频高拟真养护循环。"
 if [[ -n "$TG_TOKEN" ]]; then
     echo "📡 Webhook 监听已启动 (端口: $AGENT_PORT) 并向中枢发送了注册请求。"
-
+    
     # ================== [v3.0.3 变更: 智能防火墙检测与放行指引] ==================
     FW_MSG=""
     if command -v ufw >/dev/null 2>&1 && ufw status | grep -qw active; then
@@ -726,7 +1019,7 @@ if [[ -n "$TG_TOKEN" ]]; then
             FW_MSG="iptables -I INPUT -p tcp --dport $AGENT_PORT -j ACCEPT"
         fi
     fi
-
+    
     echo -e "\033[33m⚠️ 警告：请务必确保本机及云服务商安全组放行了 TCP $AGENT_PORT 端口！\033[0m"
     if [ -n "$FW_MSG" ]; then
         echo "💡 检测到本地防火墙开启，您可以尝试执行以下命令放行："
@@ -737,6 +1030,7 @@ fi
 echo "🗑️ 若未来需卸载，可重新运行本脚本选择[2]或执行: bash ${INSTALL_DIR}/core/uninstall.sh"
 echo "========================================================"
 
-# 自托管部署收尾
-echo -e "\033[32m✅ 自托管 Agent 部署收尾完成。\033[0m"
-echo -e "\n"
+# Self-hosted fork: external install-count telemetry is disabled.
+if [ "$UPGRADE_MODE" == "false" ]; then
+    echo -e "\nSelf-hosted deployment: install-count telemetry disabled.\n"
+fi

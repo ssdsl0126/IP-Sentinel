@@ -1,0 +1,50 @@
+{
+  "region_name": "Australia - Adelaide",
+  "google_module": {
+    "base_lat": -34.9227,
+    "base_lon": 138.6016,
+    "lang_params": "hl=en-AU&gl=AU",
+    "valid_url_suffix": "com.au"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://www.ato.gov.au/",
+      "https://www.abc.net.au/news/2026-04-28/james-paterson-coalition-says-stealth-bombers-aukus-stop-gap/106615556",
+      "https://www.abc.net.au/news/2026-04-28/suspect-white-house-correspondents-dinner-shooting-charged-trump/106614610",
+      "https://www.amazon.com.au/",
+      "https://www.abc.net.au/news/2026-04-28/rock-climber-dies-after-falling-at-mount-arapiles-organ-pipes/106614660",
+      "https://www.abc.net.au/news/2026-04-28/sa-independent-review-of-sa-election/106614604",
+      "https://www.abc.net.au/news/2026-04-28/tasmanian-education-union-teacher-pay-deal-violence-workload/106614778",
+      "https://www.bom.gov.au/",
+      "https://www.realestate.com.au/",
+      "https://www.abc.net.au/news/2026-04-28/nsw-changes-opal-card-public-transport-digital-accounts/106615510",
+      "https://www.woolworths.com.au/",
+      "https://www.coles.com.au/",
+      "https://www.abc.net.au/news/2026-04-28/nsw-womens-origin-tiana-penitani-gray-position-preview/106615340",
+      "https://www.abc.net.au/news/2026-04-28/overseas-tourist-drowns-indijup-spa-near-yallingup/106615098",
+      "https://www.commbank.com.au/",
+      "https://www.abc.net.au/news/2026-04-28/rebel-wilson-gives-evidence-in-court-the-deb-defamation-case/106614508",
+      "https://www.bunnings.com.au/",
+      "https://www.abc.net.au/news/2026-04-28/qld-cfmeu-inquiry-grace-grace-legal-representation/106615358",
+      "https://www.seek.com.au/",
+      "https://www.abc.net.au/news/2026-04-28/sustainable-alternative-shoyu-tai-sushi-plastic-soy-sauce-fish/106596352",
+      "https://www.abc.net.au/news/2026-04-28/nedra-talley-ross-of-the-ronettes-dies-aged-80/106615604",
+      "https://www.abc.net.au/news/2026-04-28/living-on-country-respectfully/106414024",
+      "https://my.gov.au/",
+      "https://www.abc.net.au/news/2026-04-28/global-military-spending-hits-record-high-how-countries-rank/106611800",
+      "https://www.abc.net.au/news/2026-04-28/thales-loses-out-strikemaster-missile-contract/106615362"
+    ],
+    "static_urls": [
+      "https://my.gov.au/",
+      "https://www.ato.gov.au/",
+      "https://www.bom.gov.au/",
+      "https://www.commbank.com.au/",
+      "https://www.seek.com.au/",
+      "https://www.realestate.com.au/",
+      "https://www.woolworths.com.au/",
+      "https://www.coles.com.au/",
+      "https://www.amazon.com.au/",
+      "https://www.bunnings.com.au/"
+    ]
+  }
+}

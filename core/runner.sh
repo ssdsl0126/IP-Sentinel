@@ -33,14 +33,24 @@ log() {
     
     # 保证日志目录存在
     mkdir -p "${INSTALL_DIR}/logs"
+    
     # 日志格式注入 [版本号] 追踪标识
-    printf "[$(date '+%Y-%m-%d %H:%M:%S')] [v%-5s] [%-5s] [%-7s] [%s] %s\n" "$local_ver" "$level" "$module" "$REGION_CODE" "$msg" >> "$LOG_FILE"
+    local core_msg=$(printf "[v%-5s] [%-5s] [%-7s] [%s] %s" "$local_ver" "$level" "$module" "$REGION_CODE" "$msg")
+    echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] $core_msg" >> "$LOG_FILE"
+
+    # 强制推送到 Systemd Journal (如果系统支持)
+    if command -v logger >/dev/null 2>&1; then
+        logger -t ip-sentinel "$core_msg"
+    else
+        # 降级输出到 stdout，让 Systemd 捕获
+        echo "$core_msg"
+    fi
 }
 export -f log
 export CONFIG_FILE INSTALL_DIR
 
 # 3. 防僵尸网络特征 (Cron Jitter) - 核心隐蔽逻辑
-# 配合每 30 分钟的调度周期，将随机休眠控制在 0 到 180 秒内，彻底打散全球并发请求
+# 配合每 20 分钟的调度周期，将随机休眠控制在 0 到 180 秒内，彻底打散全球并发请求
 if [ -t 1 ]; then
     log "SYSTEM" "INFO " "💻 检测到人工终端干预，跳过静默休眠，立即执行任务！"
 else
@@ -81,7 +91,8 @@ fi
 if [ -n "$TARGET_MOD" ] && [ -x "${INSTALL_DIR}/core/${TARGET_MOD}" ]; then
     log "SYSTEM" "INFO" "命中触发条件，加载并执行子模块: ${MOD_NAME}"
     # 核心降耗逻辑：使用 nice -n 19 赋予进程最低 CPU 优先级，绝不抢占 VPS 正常业务的资源
-    nice -n 19 bash "${INSTALL_DIR}/core/${TARGET_MOD}"
+    # [安全修复] 注入 200>&-，强行关闭子进程对排他锁的继承权！防止子进程假死导致全局死锁
+    nice -n 19 bash "${INSTALL_DIR}/core/${TARGET_MOD}" 200>&-
 else
     log "SYSTEM" "ERROR" "配置了模块 ${MOD_NAME}，但未找到对应的可执行脚本: ${TARGET_MOD}"
 fi
