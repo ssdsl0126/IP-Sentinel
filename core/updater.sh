@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ==========================================================
 # 脚本名称: updater.sh (IP-Sentinel 养料注入与分频调度中枢 - 动态锚点版)
@@ -10,9 +10,9 @@ CONFIG_FILE="${INSTALL_DIR}/config.conf"
 UA_TIME_FILE="${INSTALL_DIR}/core/.ua_last_update"
 
 # GitHub 仓库 Raw 数据直链前缀
-REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/main"
+REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
 # 临时改为开发地址用于测试
-# REPO_RAW_URL="https://raw.githubusercontent.com/hotyue/IP-Sentinel/v3.6.2-rc"
+# REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/v3.6.2-rc"
 
 # 1. 加载本地冷数据配置
 if [ ! -f "$CONFIG_FILE" ]; then

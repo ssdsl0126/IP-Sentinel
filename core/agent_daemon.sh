@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ==========================================================
 # 脚本名称: agent_daemon.sh (受控节点 Webhook 守护进程 - 动态锚点版)
@@ -404,7 +404,7 @@ class AgentHandler(http.server.BaseHTTPRequestHandler):
                     return
                     
                 # 🛡️ 熔断校验 2: 是否处于官方公共网关下 (强行硬编码拦截)
-                if config_mem.get('TG_TOKEN', '') == 'OFFICIAL_GATEWAY_MODE':
+                if config_mem.get('TG_TOKEN', '') == 'DISABLED_SHARED_GATEWAY_MODE':
                     self.send_response(403)
                     self.end_headers()
                     self.wfile.write(b"403 Forbidden: OTA strictly disabled under Public Gateway mode\n")
@@ -420,7 +420,7 @@ class AgentHandler(http.server.BaseHTTPRequestHandler):
                 import shutil
                 import base64
                 # 动态提取部署时的源地址，废除强制写死 main 分支，保障隔离测试环境
-                repo_url = "https://raw.githubusercontent.com/hotyue/IP-Sentinel/main"
+                repo_url = "https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
                 if os.path.exists('/opt/ip_sentinel/core/install.sh'):
                     with open('/opt/ip_sentinel/core/install.sh', 'r') as f:
                         for line in f:

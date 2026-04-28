@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ==========================================================
 # 脚本名称: uninstall_master.sh (IP-Sentinel Master 一键卸载脚本 - 动态锚点版)
