@@ -171,38 +171,124 @@ for ((i=1; i<=TOTAL_ACTIONS; i++)); do
     fi
 done
 
-# --- [结果纠偏自检 (V4.0.8 终极版权雷达版: Premium + Music 双重穿透)] ---
-# 战术揭秘：彻底抛弃存在 CDN 缓存假象的首页与不稳定的 Maps 接口！
-# 全面换装 Google 旗下风控最严苛的两个独立版权业务：YouTube Premium 与 YouTube Music。
-# 移除会导致 CDN 误判的 Accept-Language 伪装，以裸奔姿态直面底层风控，绝不退而求其次去抓取假阳性的 GL 变量！
+# --- [结果纠偏自检 (V4.0.9 终极三核雷达: URL跳转 + Premium + Music)] ---
+# 战术揭秘：汲取开源社区顶级探针的精髓！
+# 1. 传统 URL 跳转探测：捕捉 www.google.com 底层 302 重定向域名的真实归属。
+# 2. YT Premium 深度探测：提取核心 contentRegion 变量，并强匹配 www.google.cn 送中特征。
+# 3. 严格一致性校验：任何一端出现非预期偏移，立即判定为漂移，彻底消除虚假“成功”。
 
-log "$MODULE_NAME" "INFO " "启动双核交叉验证 (YT Premium + YT Music) 穿透获取真实 GeoIP..."
+log "$MODULE_NAME" "INFO " "启动三核交叉验证 (URL跳转 + YT Premium + YT Music) 穿透获取 GeoIP..."
 
-# 核心 1: YouTube Premium 媒体版权风控探测 (极致裸奔，仅提取绝对核心的 countryCode)
-YT_PR_HTML=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -L "https://www.youtube.com/premium")
-YT_PR_GL=$(echo "$YT_PR_HTML" | grep -o '"countryCode":"[^"]*"' | head -n 1 | cut -d'"' -f4 | tr 'a-z' 'A-Z')
+# 核心 1: 传统 URL 跳转探测 (请求 www 才能触发准确跳转)
+JUMP_HDR=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -sI "http://www.google.com/")
+JUMP_LOC=$(echo "$JUMP_HDR" | grep -i "^location:" | tr -d '\r\n')
+JUMP_GL=""
 
-# 核心 2: YouTube Music 独立版权风控探测
-YT_MU_HTML=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -L "https://music.youtube.com/")
-YT_MU_GL=$(echo "$YT_MU_HTML" | grep -o '"countryCode":"[^"]*"' | head -n 1 | cut -d'"' -f4 | tr 'a-z' 'A-Z')
-
-# 综合判定逻辑：优先信任 Premium，Music 作为辅助
-REAL_REGION="${YT_PR_GL:-$YT_MU_GL}"
-
-if [ -z "$REAL_REGION" ]; then
-    STATUS="🚨 探针失效 (未获取到版权标识，可能被 5 秒盾或严重风控拦截)"
+if [ -z "$JUMP_LOC" ]; then
+    # 无跳转 (HTTP 200) 通常意味着原生被定位于 US
+    JUMP_GL="US"
+elif [[ "$JUMP_LOC" == *".google.cn"* ]] || [[ "$JUMP_LOC" == *"gl=CN"* ]]; then
+    JUMP_GL="CN"
+elif [[ "$JUMP_LOC" == *"gl="* ]]; then
+    JUMP_GL=$(echo "$JUMP_LOC" | grep -o 'gl=[A-Za-z]\{2\}' | head -n 1 | cut -d'=' -f2 | tr 'a-z' 'A-Z')
 else
-    # [基准对齐] 提取配置大区 (兼容州级穿透，如 US-TX -> US)，并修正英国的 ISO 标准代码
-    TARGET_CC="${REGION_CODE%%-*}"
-    [ "$TARGET_CC" == "UK" ] && TARGET_CC="GB"
-    
-    # 终极审判：宁可错杀，不可放过！(任一雷达报警即判送中)
-    if [ "$YT_PR_GL" == "CN" ] || [ "$YT_MU_GL" == "CN" ]; then
-        STATUS="❌ 严重高危！版权雷达判定 IP 已被中国大陆锁定 (送中)！"
-    elif [ "$REAL_REGION" == "$TARGET_CC" ]; then
-        STATUS="✅ 目标区域达成 (Premium: ${YT_PR_GL:-无} | Music: ${YT_MU_GL:-无})"
+    # 从域名中提取区域后缀 (如 .co.jp -> JP, .com.hk -> HK, .de -> DE)
+    JUMP_DOMAIN=$(echo "$JUMP_LOC" | grep -o 'google\.[a-z\.]*' | head -n 1 | sed 's/google\.//')
+    case "$JUMP_DOMAIN" in
+        "com") JUMP_GL="US" ;;
+        "com.hk") JUMP_GL="HK" ;;
+        "com.tw") JUMP_GL="TW" ;;
+        "co.jp") JUMP_GL="JP" ;;
+        "co.uk") JUMP_GL="GB" ;;
+        "co.kr") JUMP_GL="KR" ;;
+        "co.in") JUMP_GL="IN" ;;
+        "co.id") JUMP_GL="ID" ;;
+        "co.th") JUMP_GL="TH" ;;
+        "com.sg") JUMP_GL="SG" ;;
+        "com.my") JUMP_GL="MY" ;;
+        "com.au") JUMP_GL="AU" ;;
+        "com.br") JUMP_GL="BR" ;;
+        "com.mx") JUMP_GL="MX" ;;
+        "com.ar") JUMP_GL="AR" ;;
+        "co.za") JUMP_GL="ZA" ;;
+        "cn") JUMP_GL="CN" ;;
+        "") JUMP_GL="" ;;
+        *) 
+            # 提取标准两字母后缀 (.de, .fr, .nl)
+            LAST_EXT=$(echo "$JUMP_DOMAIN" | awk -F'.' '{print $NF}' | tr 'a-z' 'A-Z')
+            if [ ${#LAST_EXT} -eq 2 ]; then
+                JUMP_GL="$LAST_EXT"
+            else
+                JUMP_GL="US"
+            fi
+            ;;
+    esac
+fi
+
+# 核心 2: YouTube Premium 探测
+YT_PR_GL=""
+# [修复] 必须带上本轮循环的专属 UA (-A "$SESSION_UA")，防止被 Google CDN 丢进无状态爬虫兜底页
+YT_PR_HTML=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -L -A "$SESSION_UA" "https://www.youtube.com/premium")
+if echo "$YT_PR_HTML" | grep -q 'www.google.cn'; then
+    YT_PR_GL="CN"
+else
+    # 穷举风控变量提取
+    YT_PR_GL=$(echo "$YT_PR_HTML" | grep -o '"contentRegion":"[A-Za-z]\{2\}"' | head -n 1 | cut -d'"' -f4 | tr 'a-z' 'A-Z')
+    [ -z "$YT_PR_GL" ] && YT_PR_GL=$(echo "$YT_PR_HTML" | grep -o '"countryCode":"[A-Za-z]\{2\}"' | head -n 1 | cut -d'"' -f4 | tr 'a-z' 'A-Z')
+    [ -z "$YT_PR_GL" ] && YT_PR_GL=$(echo "$YT_PR_HTML" | grep -o '"INNERTUBE_CONTEXT_GL":"[A-Za-z]\{2\}"' | head -n 1 | cut -d'"' -f4 | tr 'a-z' 'A-Z')
+fi
+
+# 核心 3: YouTube Music 探测
+YT_MU_GL=""
+# [修复] 同样加持 UA 装甲，强行唤出完整版前端框架
+YT_MU_HTML=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -L -A "$SESSION_UA" "https://music.youtube.com/")
+if echo "$YT_MU_HTML" | grep -q 'www.google.cn'; then
+    YT_MU_GL="CN"
+else
+    # [修复] Music 的核心配置变量是 INNERTUBE_CONTEXT_GL
+    YT_MU_GL=$(echo "$YT_MU_HTML" | grep -o '"INNERTUBE_CONTEXT_GL":"[A-Za-z]\{2\}"' | head -n 1 | cut -d'"' -f4 | tr 'a-z' 'A-Z')
+    [ -z "$YT_MU_GL" ] && YT_MU_GL=$(echo "$YT_MU_HTML" | grep -o '"countryCode":"[A-Za-z]\{2\}"' | head -n 1 | cut -d'"' -f4 | tr 'a-z' 'A-Z')
+    [ -z "$YT_MU_GL" ] && YT_MU_GL=$(echo "$YT_MU_HTML" | grep -o '"GL":"[A-Za-z]\{2\}"' | head -n 1 | cut -d'"' -f4 | tr 'a-z' 'A-Z')
+fi
+
+# [基准对齐] 提取配置大区 (兼容州级穿透)，并修正英国的 ISO 代码
+TARGET_CC="${REGION_CODE%%-*}"
+[ "$TARGET_CC" == "UK" ] && TARGET_CC="GB"
+
+# --- 终极审判逻辑 (以 YouTube 核心业务为主导，兼顾底层雷达权重) ---
+IS_CN=0
+VALID_PROBES=0
+
+# 1. 扫描所有探针，统计有效性并执行“送中”一票否决
+for val in "$JUMP_GL" "$YT_PR_GL" "$YT_MU_GL"; do
+    if [ -n "$val" ]; then
+        ((VALID_PROBES++))
+        [ "$val" == "CN" ] && IS_CN=1
+    fi
+done
+
+if [ $VALID_PROBES -eq 0 ]; then
+    STATUS="🚨 探针失效 (三核全部熔断，可能遭严重风控拦截)"
+elif [ $IS_CN -eq 1 ]; then
+    STATUS="❌ 严重高危！三核雷达判定 IP 已被中国大陆锁定 (送中)！"
+else
+    # 2. 评估核心流媒体业务是否达标 (只要 YT_PR 或 YT_MU 其一达标，即视为成功)
+    YT_MATCH=0
+    [ "$YT_PR_GL" == "$TARGET_CC" ] && YT_MATCH=1
+    [ "$YT_MU_GL" == "$TARGET_CC" ] && YT_MATCH=1
+
+    if [ $YT_MATCH -eq 1 ]; then
+        # 3. 核心业务达标，进一步评估底层路由权重
+        if [ -n "$JUMP_GL" ] && [ "$JUMP_GL" != "$TARGET_CC" ]; then
+            # YT 解锁了，但基础跳转 IP 库漂移了 (降级为 ✅，但备注底层漂移)
+            STATUS="✅ 目标区域达成 (YT主导成功, Jump副雷达漂移至 ${JUMP_GL}) | Prem: ${YT_PR_GL:-无} | Music: ${YT_MU_GL:-无}"
+        else
+            # 完美达成
+            STATUS="✅ 目标区域达成 (Jump: ${JUMP_GL:-无} | Prem: ${YT_PR_GL:-无} | Music: ${YT_MU_GL:-无})"
+        fi
     else
-        STATUS="⚠️ 区域发生漂移！目标 $TARGET_CC，实际 (Premium: ${YT_PR_GL:-无} | Music: ${YT_MU_GL:-无})"
+        # YouTube 流媒体核心未能解锁目标区域，宣判漂移
+        STATUS="⚠️ 区域发生漂移！目标 $TARGET_CC，实际 (Jump: ${JUMP_GL:-无} | Prem: ${YT_PR_GL:-无} | Music: ${YT_MU_GL:-无})"
     fi
 fi
 

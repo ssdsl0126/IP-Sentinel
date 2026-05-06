@@ -1,0 +1,50 @@
+{
+  "region_name": "Germany - Bavaria (Nuremberg)",
+  "google_module": {
+    "base_lat": 49.4521,
+    "base_lon": 11.0767,
+    "lang_params": "hl=de-DE&gl=DE",
+    "valid_url_suffix": "de"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://www.edeka.de/",
+      "https://www.sparkasse.de/",
+      "https://www.tagesschau.de/ausland/amerika/wahlkreise-zuschnitt-usa-100.html",
+      "https://www.tagesschau.de/wirtschaft/verbraucher/mietwucher-berlin-100.html",
+      "https://www.tagesschau.de/ausland/amerika/project-freedom-usa-hormus-iran-100.html",
+      "https://www.tagesschau.de/inland/spahn-fraktionschef-union-100.html",
+      "https://www.tagesschau.de/ausland/europa/ukraine-russland-waffenruhe-100.html",
+      "https://www.amazon.de/",
+      "https://www.immobilienscout24.de/",
+      "https://www.tagesschau.de/investigativ/ndr/grauer-star-behandlung-kosten-100.html",
+      "https://www.tagesschau.de/ukraine-kriegsverlauf-gady-100.html",
+      "https://www.tagesschau.de/ausland/europa/meta-alterskontrolle-eu-100.html",
+      "https://www.tagesschau.de/wirtschaft/unternehmen/deutsche-post-dhl-hauptversammlung-100.html",
+      "https://www.tagesschau.de/wirtschaft/verbraucher/urlaub-nachzahlungen-kerosinpreise-100.html",
+      "https://www.tagesschau.de/inland/innenpolitik/ein-jahr-koalition-reaktionen-100.html",
+      "https://www.tagesschau.de/wirtschaft/unternehmen/unicredit-commerzbank-uebernahme-rekordgewinn-100.html",
+      "https://www.stepstone.de/",
+      "https://www.dwd.de/",
+      "https://www.tagesschau.de/wirtschaft/konjunktur/wein-krise-deutschland-100.html",
+      "https://www.rewe.de/",
+      "https://www.obi.de/",
+      "https://www.bundesregierung.de/",
+      "https://www.tagesschau.de/ausland/europa/rumaenien-misstrauensvotum-parlament-100.html",
+      "https://www.tagesschau.de/wirtschaft/finanzen/marktberichte/marktbericht-dax-dow-geldanlage-128.html",
+      "https://www.arbeitsagentur.de/"
+    ],
+    "static_urls": [
+      "https://www.bundesregierung.de/",
+      "https://www.arbeitsagentur.de/",
+      "https://www.dwd.de/",
+      "https://www.sparkasse.de/",
+      "https://www.stepstone.de/",
+      "https://www.immobilienscout24.de/",
+      "https://www.rewe.de/",
+      "https://www.edeka.de/",
+      "https://www.amazon.de/",
+      "https://www.obi.de/"
+    ]
+  }
+}
