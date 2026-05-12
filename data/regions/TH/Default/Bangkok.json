@@ -8,21 +8,21 @@
   },
   "trust_module": {
     "white_urls": [
-      "https://www.set.or.th/",
+      "https://www.bangkokpost.com/thailand/general/3253504/pm-signals-changes-to-visa-policy",
       "https://www.bangkokpost.com/",
-      "https://www.bangkokpost.com/business/general/3253030/proposal-to-overhaul-agricultural-policy",
-      "https://www.bangkokpost.com/thailand/general/3253165/communities-mourn-death-of-famed-tusker-plai-thong-bai",
-      "https://www.thairath.co.th/",
       "https://www.thaigov.go.th/",
-      "https://www.bangkokpost.com/thailand/general/3252975/land-bridge-faces-uphill-battle",
-      "https://www.bangkokpost.com/property/3253035/housing-sector-latest-victim-of-war",
-      "https://www.bangkokpost.com/business/general/3253040/a-prickly-affair-of-durian",
-      "https://www.bangkokpost.com/life/social-and-lifestyle/3253075/under-the-algorithms-thumb",
-      "https://www.bangkokpost.com/thailand/general/3252775/pm-eyes-mafia-tactic-in-phuket",
-      "https://www.bangkokpost.com/thailand/special-reports/3252925/tracking-down-drug-lord-thapanan",
-      "https://www.bangkokpost.com/business/general/3253015/pundit-urges-growing-fruit-sales-channels",
       "https://www.bangkokpost.com/thailand/politics/3253133/former-pm-thaksin-released-from-prison",
-      "https://www.bot.or.th/"
+      "https://www.bangkokpost.com/thailand/general/3253308/five-charged-with-illegally-supplying-guns-to-chinese-in-pattaya",
+      "https://www.bangkokpost.com/thailand/general/3253165/communities-mourn-death-of-famed-tusker-plai-thong-bai",
+      "https://www.bangkokpost.com/business/general/3253439/nominee-crackdown-to-focus-on-tourist-islands",
+      "https://www.bangkokpost.com/thailand/politics/3253454/parole-unlikely-to-curb-thaksin",
+      "https://www.bot.or.th/",
+      "https://www.bangkokpost.com/thailand/general/3253298/nine-caught-with-250kg-african-ivory-smuggled-through-vietnam",
+      "https://www.set.or.th/",
+      "https://www.thairath.co.th/",
+      "https://www.bangkokpost.com/business/investment/3253569/golds-downward-price-trend-is-over",
+      "https://www.bangkokpost.com/life/social-and-lifestyle/3253075/under-the-algorithms-thumb",
+      "https://www.bangkokpost.com/thailand/politics/3253354/loan-decree-faces-pushback"
     ],
     "static_urls": [
       "https://www.thaigov.go.th/",
