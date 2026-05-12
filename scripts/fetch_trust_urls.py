@@ -25,13 +25,28 @@ RSS_FEEDS = {
     "ES": ["https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada"],
     "JP": ["https://news.yahoo.co.jp/rss/topics/top-picks.xml"],
     "HK": ["https://hk.news.yahoo.com/rss/hong-kong"],
+    "MO": ["https://macaudailytimes.com.mo/feed/"],
     "TW": ["https://news.google.com/rss?hl=zh-TW&gl=TW&ceid=TW:zh-Hant"],
     "KR": ["https://www.yonhapnewstv.co.kr/category/news/headline/feed/"],
     "SG": ["https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml"],
     "NL": ["https://feeds.nos.nl/nosnieuwsalgemeen"],
     "VN": ["https://vnexpress.net/rss/tin-moi-nhat.rss"],
     "MY": ["https://news.google.com/rss?hl=en-MY&gl=MY&ceid=MY:en"],
-    "NG": ["https://punchng.com/feed/", "https://guardian.ng/feed/"]
+    "NG": ["https://punchng.com/feed/", "https://www.vanguardngr.com/feed/"],
+    "TR": ["https://www.hurriyet.com.tr/rss/anasayfa"],
+    # ====== 下方为 PR #47 亚洲与中东新战区扩充源 (已通过实机验证) ======
+    "PH": ["https://news.google.com/rss?hl=en-PH&gl=PH"],
+    "TH": ["https://www.bangkokpost.com/rss/data/topstories.xml"],
+    "ID": ["https://www.antaranews.com/rss/terkini.xml"],
+    "IN": ["https://timesofindia.indiatimes.com/rssfeedstopstories.cms"],
+    "AE": ["https://news.google.com/rss?hl=en-AE&gl=AE"],
+    "SA": ["https://news.google.com/rss?hl=ar-SA&gl=SA"],
+    "BD": ["https://www.thedailystar.net/frontpage/rss.xml"],
+    "NP": ["https://news.google.com/rss?hl=en-NP&gl=NP"],
+    "KH": ["https://www.cambodiadaily.com/feed/"],
+    "MM": ["https://news.google.com/rss?hl=en-MM&gl=MM"],
+    "LA": ["https://news.google.com/rss?hl=en-LA&gl=LA"],
+    "MN": ["https://news.google.com/rss?hl=en-MN&gl=MN"]
 }
 
 def fetch_rss_links(region_code, max_items=15):

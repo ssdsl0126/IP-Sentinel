@@ -1,0 +1,40 @@
+{
+  "region_name": "Indonesia (Jakarta)",
+  "google_module": {
+    "base_lat": -6.2088,
+    "base_lon": 106.8456,
+    "lang_params": "hl=id-ID&gl=ID",
+    "valid_url_suffix": "co.id"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://www.antaranews.com/berita/5562835/warisan-kolonial-di-balik-seragam-cokelat",
+      "https://www.antaranews.com/berita/5562780/munjirin-larang-pedagang-hewan-kurban-gunakan-trotoar-publik",
+      "https://otomotif.antaranews.com/berita/5562775/opel-pindahkan-pekerjaan-rekayasa-ke-china-umumkan-suv-listrik-baru",
+      "https://www.antaranews.com/berita/5562764/pemkot-bandung-kemenhut-perpanjang-mou-penyelamatan-satwa-bandung-zoo",
+      "https://www.antaranews.com/",
+      "https://www.antaranews.com/berita/5562844/papdesi-tegaskan-komitmen-dukung-program-prioritas-pemerintah-di-desa",
+      "https://www.antaranews.com/berita/5562819/pemilahan-sampah-di-jakarta-dinilai-perlu-perubahan-sistem-menyeluruh",
+      "https://www.setneg.go.id/",
+      "https://www.antaranews.com/berita/5562865/bnpb-penyebab-karhutla-di-kaltara-dalam-penyelidikan",
+      "https://www.antaranews.com/berita/5562799/peneliti-china-petakan-karakteristik-distribusi-mikroplastik-di-otak-manusia",
+      "https://www.kominfo.go.id/",
+      "https://www.kompas.com/",
+      "https://www.antaranews.com/berita/5562829/pln-siap-suplai-listrik-27-mva-ke-pabrik-smelter-di-maros",
+      "https://www.bi.go.id/",
+      "https://www.antaranews.com/berita/5562804/kpk-periksa-internal-audit-pertamina-sebagai-saksi-kasus-ppt-et",
+      "https://www.antaranews.com/berita/5562863/wamenaker-kesiapan-sdm-ekonomi-kreatif-fondasi-jadikan-indonesia-emas",
+      "https://www.antaranews.com/berita/5562793/one-global-capital-ekspansi-bisnis-hotel-butik-di-parramatta",
+      "https://www.antaranews.com/berita/5562756/mendes-harap-papdesi-hasilkan-rekomendasi-sukseskan-program-prioritas",
+      "https://www.antaranews.com/berita/5562873/purbaya-sebut-panda-bond-lebih-menarik-dari-dim-sum-bond",
+      "https://www.antaranews.com/berita/5562859/pemkot-jaktim-soroti-pentingnya-pelatihan-manajemen-kurban"
+    ],
+    "static_urls": [
+      "https://www.setneg.go.id/",
+      "https://www.bi.go.id/",
+      "https://www.kominfo.go.id/",
+      "https://www.antaranews.com/",
+      "https://www.kompas.com/"
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "region_name": "Nepal (Kathmandu)",
+  "google_module": {
+    "base_lat": 27.7172,
+    "base_lon": 85.324,
+    "lang_params": "hl=en-NP&gl=NP",
+    "valid_url_suffix": "com.np"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://news.google.com/rss/articles/CBMibEFVX3lxTFB3WTROMDc2RXVfTHRKZ2dSS0hxd091Ujk1TkppaERnZ3U3d3ZNMWZFRXR6aHFibGwydjdXY3FxWnpXOVJEdGozaFBUTkkta1VHYlpLZ0EtWHFYZkozeFg0R2s4bVNCd3dKbGxpeg?oc=5",
+      "https://thehimalayantimes.com/",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxPVlQzRVpaNWR4U0NDdW9WWV9ESHhiMzZDS2J1azJiUnY2U0ppYUx2dHFHZ0VZTjZpZFJyZU9EQUxDaFBrNGFUR0g5WGpFUGFZXzdfTF9pTTh1VDFfQUx5eUJfbjdwVU92c1g4VWtXTGpiQzhQdVI2alZacnQ0WkZrOGNjWQ?oc=5",
+      "https://news.google.com/rss/articles/CBMijwFBVV95cUxOYjFxM2JsRFktMHNZNllkSmdCZ1NVQTFuUEU4SlFJNWhrVXdiQXJLaHdDSFU1b3JkT01VOGd0STRvcF9ZN25tSVpWdTFVd3JRY0FTRFJwWkpLdXh6UzlBcmtjRF9ILUl6dXh5ZDlrSEpEa183eXh5R1hFX214SFYxNTZQUmV3Zk93eWtTR3ZzMA?oc=5",
+      "https://www.nrb.org.np/",
+      "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE80TFVFRXJvMTZJdEYzdUVmZzNwNlYzdGtiYmZIU1ZSUUpHckItSDJVTjI1N1dkaDJjd29uLXBwZmhqTDFtMklVbmNoTzNiRGVLOER5MHp3aXNIWWRzU3dfZVlMZG5aVjA?oc=5",
+      "https://news.google.com/rss/articles/CBMixAFBVV95cUxOWkg3b1J0X2R2eDlycVc0dlE2cFZTT2NPUHkyN3U2ZUsyS2ZpNUsxNTcwN2JEWHpPVzQ1Rm5Nd1dvc3VYSWNKZHRCOHR2MHpzcFRHREZJOU52TmFMV0Jxa3VLZlQtelNsVVFBWGIxQlBSaWUyRUh3ZjlGMmM0a2xOMV9VYy0xOExsRFpDLTNOV2pFSWxXRzBtZWdTU21nVDNaQVl6MnEwS2h1Q2pibjNCaXpIQkJ1dzIwUWNJMWl4UFpiSS1Y?oc=5",
+      "https://news.google.com/rss/articles/CBMizAFBVV95cUxPUVg4M0I1OFlOVG1oZmNBbWVsZzJLck91ZGllNm9HSmFiTnNrMjk5dWhFcTFlNFl6WDNWdnhlYTdWLTRtMUM4MHVtMmlaaGtMSloxeVBvbTR3X1hHNk1ELVd3aXNlbHg2NkpvNmY4Rm1uRXNCb1M4S0V0eEg5OTB3bkg0UDRhRnVxVkFnZjBXdUhHLUZWM1JRZUFrcXNmTkhSNXI4ZmFBR0N6VXdsWXFpaWQxV1ZoMFBaUjV0b0VaS25KUlJnWm14WVpaSm4?oc=5",
+      "https://news.google.com/rss/articles/CBMinAFBVV95cUxNejhNNHZ3NTM4TVlObmU3NGVCcGh3aldQczEwY0xDZ2ZuZ3VfeGhXdmg2ZVRFeGxnLV9Gc0RjSjlrM3hVdzhIUnJva2t6LU5veE5KNjM5RkNmVzZpdFZwVWhUMllqWWdOWjFBZFkyOHJCS21KLWdpUi1RdFZreGpqVi1IU1pveGlaaF9NajIybE12Q2tzYllwZ2pCdU0?oc=5",
+      "https://www.onlinekhabar.com/",
+      "https://kathmandupost.com/",
+      "https://news.google.com/rss/articles/CBMilwFBVV95cUxOaERsWkVIaFg3ZElLZlpaY29NOVhZSm5rRm4wVi05MzhEbU1lWHdzM1FOTlZaV2JqelM1aDJsUDN5bWFmWDAtTTZYUEc4MnY0al9EblA1M253dkhfSloxeXdzNGFDWnRXMkk5bHdfYS13Q055QjYyQjZhY2xGdnVDYjQ3dDZTYzQ0ZmR2cVVMd0REUTdWZVp3?oc=5",
+      "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5MaHBPNUU2WkRCc1YzcFdPbzEzZ2ZNaU5ScEdfdm5wb0NDVWNoSUlTNEdqRUI3cmRIS3pzbV9NTEJzQ19OVWJZM1pyVUZyV1gzRVBWdFBNTDNhZw?oc=5",
+      "https://news.google.com/rss/articles/CBMilwFBVV95cUxOV2JtbExiZFNwNnF3a2N3dlZzQjFlVHd3RmNiX0VyVUh4eG5OQUZHUDJjYUtJVkVNc0FMczNxakV1VEtjNWVEVFhUaWFPYXFlbU50dzlSRTV3VEp1TFktVE4yZ1FOMjBoQkxaTTJOSmNORmN4UjBtQ0ZsYUppT1U3MVRINGJwb0p3UlNOZ3A0RGZvNXdCU0Zv?oc=5",
+      "https://news.google.com/rss/articles/CBMitwFBVV95cUxORmRpUjRKUWFXSzVPY05jZGtvMUVpcmZJa0t5SlVoQ0NTQmJlMXl1Rk1qaWJ1Qml1VElDVG02dHRxX01XT0lpOEpnRmQ5WXdYaDR1QllnckJzUmpVdHhjT21YS2k1akxobUE2Qkc1bVZ2YmFHajc1TVZ6eXNBOURQUlJDdzhReW1xRDlWdDRRc05uRUVCczA3Sk9aUlpzdHZsZEhDWURzbjkycXZqSHl6eFlfVThwM28?oc=5",
+      "https://nepal.gov.np/",
+      "https://news.google.com/rss/articles/CBMirgFBVV95cUxQNF9aSy1oMzZlUTRSY000Wk92aGdIV0ljclc0ZUtkUFQ4TVY3TFlkdElVZG5WSjMwQS1sdmVGc182dnJlZFRYMkhtVnN0Rk5uQk5XOXR5RTNxOXd1TF9ueFlXcmhGSUVNVEFKV3gtVVZmcEx1X05HOVBPeDAzRTVYNGc5NDh3Z295Z3BPcnB4ei1uSGxwWGRFMXRmTkhyU0V0clV5N2tQQmh0OEl6UUE?oc=5",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxQMkhqQTc1Q2d6anBaeDZ4UDlfZ2d5S3R1RkVraGxHVFhUclFoaGZHZjdSY1VKcTJSemRmWVNUWHNtN3RIUXFzUVpfbFIydTJKcWF4UUVnMkJyd2U3eDZDRHhPcS05LW9zOTR5NkdtRGpKVXdaazBuUXNqMS1sVUlHSmxNQQ?oc=5",
+      "https://news.google.com/rss/articles/CBMixgFBVV95cUxPVEZxUEtXNXB3WmhXU1RVblBIeVdpMjlPWTc3NndaY3BmNS1vMllfZE1Qb0J1RWFQZTNEekRVTUktWjNLOFhvVHQxLUpzT0xQMVFSOHhlbGVNcUNuNjZCTS11RnNpbS1neHhIcjVOd1RZQlBWWUhyQXVaVG9sOU5ieXBDa3UySEh3dDVRVEhoVGRfSUlpcXZ2dWx3TFd0eVVFbEpVeWJvcGVYcmRjZDJVbThBdHl3UVR0aUpfcTE3RzhDVlhFUUHSAcsBQVVfeXFMT3g0UUlRelRHdlhLYlNHcDRsUk14SUllaWlQUVBwWElIdlpfakN3bkx4WkpLdXFLN1FEb194RHNldnV1SlRJTWYxVldkM2pVS0hscWF4dU54OUg5YmRscEJsYUI5b3FhZzRqczJuTDJNbEdQN2FVUGJDalBxa3BZZVdSdnoxdjhXVVpnUUZYUWJuaDBKVWpSVXFFNE5vblAzNWVwSm9zQ0gwLUh0aThqSnF1SldjYnZHbUFab18tTThBVUxLSldCcFRYcVE?oc=5",
+      "https://news.google.com/rss/articles/CBMiowFBVV95cUxQQkh4QzJqTGhjczhnREQ4YkVtUEZvNHpRNGJKcUNaWmxMbFNCTGRWcFVCbEVPM3BET1dLUzhYN3NTWVFTdHIyelRMcjRFTFdIWTJOeUhuRllaaU56N0wyb2ttWGtIN0lnaTRUcE9aYXhSeUZIX2t5cVRBN1dfS21ZSUZpUnJub2NlcE5KMGhSamtfSmdZaklPdjhHX1VwQ1VfVlFz?oc=5"
+    ],
+    "static_urls": [
+      "https://nepal.gov.np/",
+      "https://www.nrb.org.np/",
+      "https://kathmandupost.com/",
+      "https://thehimalayantimes.com/",
+      "https://www.onlinekhabar.com/"
+    ]
+  }
+}

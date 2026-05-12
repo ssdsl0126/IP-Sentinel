@@ -9,21 +9,21 @@
   "trust_module": {
     "white_urls": [
       "https://www.yahoo.co.jp/",
-      "https://news.yahoo.co.jp/pickup/6578987?source=rss",
-      "https://news.yahoo.co.jp/pickup/6578993?source=rss",
-      "https://news.yahoo.co.jp/pickup/6579009?source=rss",
-      "https://news.yahoo.co.jp/pickup/6578996?source=rss",
-      "https://www.japan.go.jp/",
-      "https://www.amazon.co.jp/",
       "https://www.mhlw.go.jp/",
-      "https://www.smbc.co.jp/",
-      "https://news.yahoo.co.jp/pickup/6578997?source=rss",
+      "https://news.yahoo.co.jp/pickup/6579637?source=rss",
+      "https://news.yahoo.co.jp/pickup/6579634?source=rss",
+      "https://news.yahoo.co.jp/pickup/6579628?source=rss",
+      "https://news.yahoo.co.jp/pickup/6579621?source=rss",
       "https://www.jreast.co.jp/",
-      "https://news.yahoo.co.jp/pickup/6579007?source=rss",
-      "https://www.rakuten.co.jp/",
+      "https://www.japan.go.jp/",
+      "https://www.smbc.co.jp/",
+      "https://news.yahoo.co.jp/pickup/6579638?source=rss",
+      "https://news.yahoo.co.jp/pickup/6579625?source=rss",
       "https://www.u-tokyo.ac.jp/",
-      "https://news.yahoo.co.jp/pickup/6579008?source=rss",
-      "https://news.yahoo.co.jp/pickup/6578991?source=rss"
+      "https://news.yahoo.co.jp/pickup/6579636?source=rss",
+      "https://news.yahoo.co.jp/pickup/6579635?source=rss",
+      "https://www.amazon.co.jp/",
+      "https://www.rakuten.co.jp/"
     ],
     "static_urls": [
       "https://www.japan.go.jp/",
