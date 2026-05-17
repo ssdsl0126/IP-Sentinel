@@ -8,21 +8,21 @@
   },
   "trust_module": {
     "white_urls": [
-      "https://www.bangkokpost.com/business/general/3255739/tourism-strategy-targets-highspending-visitors",
-      "https://www.bangkokpost.com/thailand/general/3255764/navy-pushes-new-frigate-plan",
-      "https://www.set.or.th/",
-      "https://www.bangkokpost.com/thailand/general/3255934/thailand-tightens-sales-rules-for-cannabis",
-      "https://www.bangkokpost.com/business/general/3255799/oil-inflation-worries-push-shares-downward",
-      "https://www.bangkokpost.com/thailand/politics/3255994/bangkok-race-set-to-tighten",
-      "https://www.bangkokpost.com/thailand/general/3255679/state-agencies-deny-graft-claims",
-      "https://www.bangkokpost.com/business/general/3255774/financially-weak-airlines-at-risk-from-rising-fuel-prices",
-      "https://www.bangkokpost.com/thailand/general/3255724/bangkok-expressway-expansion-to-be-fasttracked",
-      "https://www.thairath.co.th/",
       "https://www.bot.or.th/",
       "https://www.bangkokpost.com/",
-      "https://www.bangkokpost.com/business/general/3255620/ecommerce-platforms-defend-rising-fees",
       "https://www.thaigov.go.th/",
-      "https://www.bangkokpost.com/business/general/3255979/a-closer-look-at-the-ai-hype-train"
+      "https://www.bangkokpost.com/world/3256399/who-declares-international-emergency-as-ebola-outbreak-kills-88-in-dr-congo",
+      "https://www.bangkokpost.com/thailand/general/3256395/bus-and-train-drivers-charged-after-deadly-level-crossing-crash",
+      "https://www.bangkokpost.com/thailand/politics/3256255/chadchart-exit-may-trigger-vote",
+      "https://www.bangkokpost.com/thailand/general/3256405/khon-kaen-contractor-offers-cash-to-deter-cable-theft",
+      "https://www.set.or.th/",
+      "https://www.bangkokpost.com/thailand/general/3256083/at-least-8-dead-in-bangkok-bustrain-collision",
+      "https://www.bangkokpost.com/thailand/special-reports/3256325/concerns-over-land-bridge-grow",
+      "https://www.bangkokpost.com/thailand/general/3256370/highend-phuket-seaplane-service-to-connect-to-andaman-spots",
+      "https://www.bangkokpost.com/thailand/general/3256058/maker-of-diluted-cat-medicines-busted",
+      "https://www.thairath.co.th/",
+      "https://www.bangkokpost.com/opinion/opinion/3256040/this-bma-learning-programme-gets-a-failing-grade",
+      "https://www.bangkokpost.com/thailand/general/3256095/thai-prisons-in-state-of-crisis"
     ],
     "static_urls": [
       "https://www.thaigov.go.th/",
