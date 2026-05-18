@@ -1,0 +1,33 @@
+{
+  "region_name": "Japan (Osaka)",
+  "google_module": {
+    "base_lat": 34.6937,
+    "base_lon": 135.5023,
+    "lang_params": "hl=ja&gl=JP",
+    "valid_url_suffix": "co.jp"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://www.yahoo.co.jp/",
+      "https://news.yahoo.co.jp/pickup/6580652?source=rss",
+      "https://www.jnto.go.jp/",
+      "https://news.yahoo.co.jp/pickup/6580653?source=rss",
+      "https://news.yahoo.co.jp/pickup/6580646?source=rss",
+      "https://news.yahoo.co.jp/pickup/6580649?source=rss",
+      "https://www.nhk.or.jp/",
+      "https://www.japan.go.jp/",
+      "https://www.rakuten.co.jp/",
+      "https://news.yahoo.co.jp/pickup/6580644?source=rss",
+      "https://news.yahoo.co.jp/pickup/6580635?source=rss",
+      "https://news.yahoo.co.jp/pickup/6580660?source=rss",
+      "https://news.yahoo.co.jp/pickup/6580661?source=rss"
+    ],
+    "static_urls": [
+      "https://www.yahoo.co.jp/",
+      "https://www.nhk.or.jp/",
+      "https://www.rakuten.co.jp/",
+      "https://www.japan.go.jp/",
+      "https://www.jnto.go.jp/"
+    ]
+  }
+}

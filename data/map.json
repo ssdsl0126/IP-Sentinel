@@ -18,6 +18,10 @@
                 {
                   "id": "Tokyo",
                   "name": "Tokyo (东京)"
+                },
+                {
+                  "id": "Osaka",
+                  "name": "Osaka (大阪)"
                 }
               ]
             }
@@ -516,6 +520,10 @@
                 {
                   "id": "Los_Angeles",
                   "name": "Los Angeles (洛杉矶)"
+                },
+                {
+                  "id": "Ontario",
+                  "name": "Ontario (安大略)"
                 },
                 {
                   "id": "San_Jose",
