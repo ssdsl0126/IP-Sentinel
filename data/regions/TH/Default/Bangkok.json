@@ -8,21 +8,21 @@
   },
   "trust_module": {
     "white_urls": [
+      "https://www.bangkokpost.com/business/general/3258229/unnecessary-laws-to-get-the-chop",
+      "https://www.bangkokpost.com/thailand/politics/3258249/pm-orders-full-disclosure-of-public-information",
+      "https://www.bangkokpost.com/business/general/3258203/visitors-to-thailand-could-face-higher-tourist-tax",
       "https://www.set.or.th/",
-      "https://www.bangkokpost.com/thailand/general/3257625/boonrawd-brewery-responds-to-family-drama",
-      "https://www.bangkokpost.com/thailand/politics/3258110/appeal-court-sentences-opposition-mp-piyarat-to-3-years",
-      "https://www.bangkokpost.com/business/general/3257768/call-for-more-migrants-to-ease-labour-shortage",
-      "https://www.thairath.co.th/",
-      "https://www.bangkokpost.com/business/general/3257948/humanoid-robots-set-to-reshape-manufacturing",
-      "https://www.bangkokpost.com/thailand/general/3258100/nationwide-flood-warning-for-wednesday-and-thursday",
+      "https://www.bangkokpost.com/thailand/general/3258164/thai-police-charged-with-abducting-chinese-face-suspension",
       "https://www.bangkokpost.com/",
-      "https://www.thaigov.go.th/",
-      "https://www.bangkokpost.com/business/general/3257833/fuel-consumption-posts-increase-in-q1",
-      "https://www.bangkokpost.com/business/general/3257808/thai-visa-exemptions-cut-by-cabinet",
-      "https://www.bangkokpost.com/world/3258079/chinese-aircraft-carrier-kicks-off-drills-in-western-pacific-amid-tense-japan-ties",
-      "https://www.bangkokpost.com/thailand/general/3257718/4-bodies-from-train-crash-identified",
+      "https://www.thairath.co.th/",
+      "https://www.bangkokpost.com/world/3258194/iran-warns-of-war-beyond-mideast-as-trump-repeats-threats",
+      "https://www.bangkokpost.com/business/general/3258424/b20-expansion-targets-energy-security-boost",
+      "https://www.bangkokpost.com/thailand/politics/3258409/pp-reintroduces-six-stalled-bills",
+      "https://www.bangkokpost.com/thailand/politics/3258559/charter-change-efforts-falter",
       "https://www.bot.or.th/",
-      "https://www.bangkokpost.com/business/general/3257883/rice-exports-challenged-by-iran-war-and-parched-weather-forecast"
+      "https://www.bangkokpost.com/business/general/3258349/industry-confidence-dips-amid-energy-price-fears",
+      "https://www.thaigov.go.th/",
+      "https://www.bangkokpost.com/thailand/general/3258198/crashed-train-technician-tests-negative-for-drugs"
     ],
     "static_urls": [
       "https://www.thaigov.go.th/",
