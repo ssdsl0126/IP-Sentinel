@@ -8,21 +8,21 @@
   },
   "trust_module": {
     "white_urls": [
-      "https://www.bangkokpost.com/thailand/general/3258164/thai-police-charged-with-abducting-chinese-face-suspension",
+      "https://www.bangkokpost.com/business/general/3258963/copay-unlikely-to-help-big-eateries",
+      "https://www.bangkokpost.com/life/travel/3258668/tourists-in-thailand-plan-for-cuts-to-visafree-stays",
+      "https://www.bangkokpost.com/thailand/general/3259170/pattaya-hotel-fire-injures-four-guests-relocated",
+      "https://www.bangkokpost.com/business/general/3259008/exim-bank-raises-export-growth-projection-to-7",
+      "https://www.bangkokpost.com/business/general/3258888/economists-stress-inflation-warning-for-thai-economy",
+      "https://www.bangkokpost.com/thailand/general/3258928/anutin-departs-for-france",
       "https://www.bot.or.th/",
-      "https://www.bangkokpost.com/business/general/3258424/b20-expansion-targets-energy-security-boost",
-      "https://www.thairath.co.th/",
-      "https://www.bangkokpost.com/thailand/politics/3258559/charter-change-efforts-falter",
-      "https://www.bangkokpost.com/thailand/politics/3258249/pm-orders-full-disclosure-of-public-information",
-      "https://www.bangkokpost.com/business/general/3258349/industry-confidence-dips-amid-energy-price-fears",
-      "https://www.bangkokpost.com/thailand/politics/3258409/pp-reintroduces-six-stalled-bills",
+      "https://www.bangkokpost.com/",
       "https://www.set.or.th/",
-      "https://www.bangkokpost.com/business/general/3258203/visitors-to-thailand-could-face-higher-tourist-tax",
-      "https://www.bangkokpost.com/world/3258194/iran-warns-of-war-beyond-mideast-as-trump-repeats-threats",
-      "https://www.bangkokpost.com/business/general/3258229/unnecessary-laws-to-get-the-chop",
-      "https://www.bangkokpost.com/thailand/general/3258198/crashed-train-technician-tests-negative-for-drugs",
+      "https://www.bangkokpost.com/thailand/general/3258670/esports-in-thai-schools-to-help-build-digital-human-capital",
+      "https://www.bangkokpost.com/business/general/3258868/businesses-warn-of-worker-shortage",
+      "https://www.thairath.co.th/",
+      "https://www.bangkokpost.com/thailand/politics/3258818/premier-backs-privy-council-attendance",
       "https://www.thaigov.go.th/",
-      "https://www.bangkokpost.com/"
+      "https://www.bangkokpost.com/thailand/general/3258803/three-charged-over-fatal-train-crash"
     ],
     "static_urls": [
       "https://www.thaigov.go.th/",
