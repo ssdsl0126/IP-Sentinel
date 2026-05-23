@@ -8,21 +8,21 @@
   },
   "trust_module": {
     "white_urls": [
-      "https://www.bangkokpost.com/business/general/3258963/copay-unlikely-to-help-big-eateries",
-      "https://www.bangkokpost.com/life/travel/3258668/tourists-in-thailand-plan-for-cuts-to-visafree-stays",
-      "https://www.bangkokpost.com/thailand/general/3259170/pattaya-hotel-fire-injures-four-guests-relocated",
-      "https://www.bangkokpost.com/business/general/3259008/exim-bank-raises-export-growth-projection-to-7",
-      "https://www.bangkokpost.com/business/general/3258888/economists-stress-inflation-warning-for-thai-economy",
-      "https://www.bangkokpost.com/thailand/general/3258928/anutin-departs-for-france",
+      "https://www.bangkokpost.com/opinion/opinion/3259669/cutting-visafree-stays-show-us-the-lower-crime-stats",
+      "https://www.bangkokpost.com/business/general/3259429/higher-electricity-prices-to-hit-large-thai-families",
+      "https://www.bangkokpost.com/business/general/3259634/thai-airlines-grapple-with-jet-fuel-surge",
+      "https://www.bangkokpost.com/world/3259654/ebola-risk-now-at-highest-level-in-dr-congo-says-who",
       "https://www.bot.or.th/",
-      "https://www.bangkokpost.com/",
-      "https://www.set.or.th/",
-      "https://www.bangkokpost.com/thailand/general/3258670/esports-in-thai-schools-to-help-build-digital-human-capital",
-      "https://www.bangkokpost.com/business/general/3258868/businesses-warn-of-worker-shortage",
       "https://www.thairath.co.th/",
-      "https://www.bangkokpost.com/thailand/politics/3258818/premier-backs-privy-council-attendance",
+      "https://www.bangkokpost.com/thailand/politics/3259644/division-in-the-opposition",
+      "https://www.set.or.th/",
+      "https://www.bangkokpost.com/thailand/politics/3259290/pm-anutin-begins-visit-to-france",
+      "https://www.bangkokpost.com/",
+      "https://www.bangkokpost.com/video/thailand/3259664/visitor-programmes-on-sustainable-elephant-care-in-ayutthaya-thailand",
       "https://www.thaigov.go.th/",
-      "https://www.bangkokpost.com/thailand/general/3258803/three-charged-over-fatal-train-crash"
+      "https://www.bangkokpost.com/thailand/general/3259299/thailand-steps-up-screening-for-ebola",
+      "https://www.bangkokpost.com/thailand/general/3259569/tourism-operators-back-30day-visa-return",
+      "https://www.bangkokpost.com/business/general/3259604/new-fed-chief-faces-immediate-pressure"
     ],
     "static_urls": [
       "https://www.thaigov.go.th/",
