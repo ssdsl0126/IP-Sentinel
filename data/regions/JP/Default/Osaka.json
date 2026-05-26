@@ -8,19 +8,19 @@
   },
   "trust_module": {
     "white_urls": [
-      "https://www.rakuten.co.jp/",
-      "https://news.yahoo.co.jp/pickup/6581619?source=rss",
-      "https://news.yahoo.co.jp/pickup/6581613?source=rss",
+      "https://news.yahoo.co.jp/pickup/6581753?source=rss",
       "https://www.jnto.go.jp/",
-      "https://news.yahoo.co.jp/pickup/6581614?source=rss",
-      "https://news.yahoo.co.jp/pickup/6581612?source=rss",
-      "https://news.yahoo.co.jp/pickup/6581616?source=rss",
-      "https://www.nhk.or.jp/",
-      "https://news.yahoo.co.jp/pickup/6581615?source=rss",
+      "https://news.yahoo.co.jp/pickup/6581763?source=rss",
+      "https://news.yahoo.co.jp/pickup/6581772?source=rss",
       "https://www.japan.go.jp/",
-      "https://news.yahoo.co.jp/pickup/6581605?source=rss",
+      "https://news.yahoo.co.jp/pickup/6581765?source=rss",
+      "https://www.nhk.or.jp/",
+      "https://news.yahoo.co.jp/pickup/6581760?source=rss",
+      "https://news.yahoo.co.jp/pickup/6581769?source=rss",
       "https://www.yahoo.co.jp/",
-      "https://news.yahoo.co.jp/pickup/6581603?source=rss"
+      "https://news.yahoo.co.jp/pickup/6581761?source=rss",
+      "https://news.yahoo.co.jp/pickup/6581767?source=rss",
+      "https://www.rakuten.co.jp/"
     ],
     "static_urls": [
       "https://www.yahoo.co.jp/",

@@ -8,21 +8,21 @@
   },
   "trust_module": {
     "white_urls": [
-      "https://www.bangkokpost.com/thailand/general/3260193/new-stimulus-registration-opens-today",
-      "https://www.bangkokpost.com/thailand/general/3260133/thailand-steps-up-ebola-screening",
-      "https://www.bangkokpost.com/business/general/3260433/economic-restructure-proposed",
+      "https://www.bangkokpost.com/thailand/politics/3260879/pp-leader-blasted-over-blue-regime-remark",
+      "https://www.bangkokpost.com/business/general/3260929/nesdc-to-evaluate-land-bridge-project",
+      "https://www.bangkokpost.com/business/general/3261150/why-our-workplaces-arent-working-part-2",
       "https://www.bangkokpost.com/",
-      "https://www.bangkokpost.com/business/general/3260438/thai-aviation-faces-tougher-quarters",
-      "https://www.bangkokpost.com/business/general/3260378/extortion-scandal-hits-chinese-bookings",
-      "https://www.thairath.co.th/",
-      "https://www.bot.or.th/",
-      "https://www.bangkokpost.com/thailand/special-reports/3260323/cannabis-market-barely-dented-by-new-rules",
+      "https://www.bangkokpost.com/business/general/3260884/middle-east-seat-capacity-plummets",
+      "https://www.bangkokpost.com/thailand/general/3260714/new-subsidy-sparks-surge-in-signups",
+      "https://www.bangkokpost.com/business/general/3260764/pm-urges-europe-envoys-to-hasten-eu-trade-talks",
       "https://www.set.or.th/",
-      "https://www.bangkokpost.com/thailand/politics/3260123/pm-insists-on-equal-site-visits",
-      "https://www.bangkokpost.com/world/3260110/possible-iranus-deal-what-we-know",
-      "https://www.bangkokpost.com/thailand/general/3260298/most-covid19-cases-linked-to-mild-variant",
+      "https://www.bot.or.th/",
+      "https://www.thairath.co.th/",
       "https://www.thaigov.go.th/",
-      "https://www.bangkokpost.com/thailand/general/3260108/21-foreign-suspects-in-koh-phangan-nominee-probe-in-court-on-monday"
+      "https://www.bangkokpost.com/business/general/3260964/ai-growth-puts-87m-thai-jobs-at-risk",
+      "https://www.bangkokpost.com/business/general/3260664/record-april-trade-deficit-as-imports-rise-sharply",
+      "https://www.bangkokpost.com/thailand/general/3260650/eighth-victim-of-deadly-trainbus-crash-identified",
+      "https://www.bangkokpost.com/world/3260653/pope-urges-disarming-of-artificial-intelligence-in-major-manifesto"
     ],
     "static_urls": [
       "https://www.thaigov.go.th/",
