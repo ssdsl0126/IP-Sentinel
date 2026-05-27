@@ -55,6 +55,11 @@ fi
 mapfile -t UA_POOL < <(grep -v '^$' "$UA_FILE")
 mapfile -t KEYWORDS < <(grep -v '^$' "$KW_FILE")
 
+if [ ${#KEYWORDS[@]} -eq 0 ]; then
+    log "$MODULE_NAME" "ERROR" "关键词库为空，终止执行。"
+    exit 1
+fi
+
 # --- [工具函数] ---
 get_random_coord() {
     local base=$1
@@ -87,8 +92,8 @@ if [ "$TOTAL_UA" -gt 0 ]; then
     # 4. 本次会话从这 3 台专属设备中随机挑选 1 台进行模拟
     SESSION_UA=${MY_UA_POOL[$RANDOM % 3]}
 else
-    # 兜底容错机制
-    SESSION_UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    # 兜底采用 Firefox ESR（与 curl/OpenSSL 指纹逻辑更自洽）
+    SESSION_UA="Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
 fi
 # 位置锁定：在基准点(比如东京新宿)附近 3 公里内随机生成本次上网的“固定咖啡馆”坐标
 SESSION_BASE_LAT=$(get_random_coord $BASE_LAT 270)
@@ -100,6 +105,26 @@ TOTAL_ACTIONS=$((5 + RANDOM % 4))
 log "$MODULE_NAME" "INFO " "当前出网 IP: $CURRENT_IP"
 log "$MODULE_NAME" "INFO " "设备指纹锁定: ${SESSION_UA:0:45}..."
 log "$MODULE_NAME" "INFO " "虚拟驻留坐标: $SESSION_BASE_LAT, $SESSION_BASE_LON"
+
+# -----------------------------------------------------------
+# [V4.1.0] 持久化 Cookie 身份库
+# Google 专属 Cookie 池（物理隔离）
+# -----------------------------------------------------------
+COOKIE_DIR="${INSTALL_DIR}/data/cookies"
+mkdir -p "$COOKIE_DIR"
+
+NODE_HASH=$(echo -n "$CURRENT_IP" | cksum | awk '{print $1}')
+COOKIE_FILE="${COOKIE_DIR}/google_${NODE_HASH}.txt"
+
+LOCK_FILE="${COOKIE_FILE}.lock"
+
+exec 200>"$LOCK_FILE"
+flock -n 200 || {
+    log "$MODULE_NAME" "WARN " "检测到已有 Google 会话运行，跳过本轮。"
+    exit 0
+}
+
+log "$MODULE_NAME" "INFO " "Cookie 持久化身份已加载: ${COOKIE_FILE}"
 
 # -----------------------------------------------------------
 # [V3.2.1 热修复] 网络锚定与协议自适应构建 
@@ -127,6 +152,20 @@ if [[ -n "$BIND_IP" && "$BIND_IP" =~ ^[0-9a-fA-F:\.]+$ ]]; then
     fi
 fi
 
+# -----------------------------------------------------------
+# [V4.1.0] 生物节律系统
+# 凌晨低活跃，避免 24 小时机械行为
+# -----------------------------------------------------------
+LOCAL_HOUR=$(date +%H)
+
+if [ "$LOCAL_HOUR" -ge 1 ] && [ "$LOCAL_HOUR" -le 6 ]; then
+    # 深夜 70% 概率休眠
+    if [ $((RANDOM % 100)) -lt 70 ]; then
+        log "$MODULE_NAME" "INFO " "🌙 夜间生物节律触发，本轮行为模拟休眠。"
+        exit 0
+    fi
+fi
+
 # --- [行为循环模拟] ---
 for ((i=1; i<=TOTAL_ACTIONS; i++)); do
     # 模拟真实移动设备拿在手里时的 GPS 信号微抖动 (范围约 10 米)
@@ -139,26 +178,82 @@ for ((i=1; i<=TOTAL_ACTIONS; i++)); do
     
     # 随机选择一种上网行为
     ACTION_TYPE=$((1 + RANDOM % 4))
+
+# -----------------------------------------------------------
+# [V4.1.0] 极简真实客户端载荷
+# -----------------------------------------------------------
+CURL_BASE=(curl)
+
+# 协议栈
+CURL_BASE+=("$DYNAMIC_IP_PREF")
+CURL_BASE+=(--http2)
+
+# 网络层
+if [ -n "$CURL_BIND_OPT" ]; then
+    CURL_BASE+=($CURL_BIND_OPT)
+fi
+
+# 基础参数
+CURL_BASE+=(
+    -m 15
+    -s
+    -L
+    -o /dev/null
+    -w "%{http_code}"
+)
+
+# Persona
+CURL_BASE+=(
+    -A "$SESSION_UA"
+    -b "$COOKIE_FILE"
+    -c "$COOKIE_FILE"
+)
+
+# 极简 Header
+CURL_BASE+=(
+    -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+    -H "Accept-Language: ${LANG_ACCEPT}"
+    -H "Upgrade-Insecure-Requests: 1"
+)
     
-    # [V3.2.1 热修复] 注入 $CURL_BIND_OPT 与 $DYNAMIC_IP_PREF 协议自适应
     case $ACTION_TYPE in
-        1) # 搜索行为
-            CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -L -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
-                 "https://www.google.com/search?q=${ENCODED_KEY}&${LANG_PARAMS}")
-            ;;
-        2) # 浏览本土新闻
-            CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -L -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
-                 "https://news.google.com/home?${LANG_PARAMS}")
-            ;;
-        3) # 地图坐标查询
-            CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 15 -s -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
-                 "https://www.google.com/maps/search/$${ENCODED_KEY}/@${ACTION_LAT},${ACTION_LON},17z?${LANG_PARAMS}")
-            ;;
-        4) # 触发移动端系统底层位置检测像素
-            CODE=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -o /dev/null -w "%{http_code}" -A "$SESSION_UA" \
-                 "https://connectivitycheck.gstatic.com/generate_204")
-            ;;
-    esac
+
+    1) # Google 搜索（降低危险频率）
+        # 仅 40% 概率真的执行搜索
+        if [ $((RANDOM % 100)) -lt 40 ]; then
+            CODE=$("${CURL_BASE[@]}" \
+                "https://www.google.com/search?q=${ENCODED_KEY}&${LANG_PARAMS}")
+        else
+            CODE=$("${CURL_BASE[@]}" \
+                "https://support.google.com/?hl=${LANG_ACCEPT%%,*}")
+        fi
+        ;;
+
+    2) # Google News 漫游
+        CODE=$("${CURL_BASE[@]}" \
+            "https://news.google.com/home?${LANG_PARAMS}")
+        ;;
+
+    3) # Google Maps 漫游
+        CODE=$("${CURL_BASE[@]}" \
+            "https://www.google.com/maps?q=${ENCODED_KEY}&ll=${ACTION_LAT},${ACTION_LON}&z=17&${LANG_PARAMS}")
+        ;;
+
+        4) # Android Connectivity Check
+        CODE=$(curl \
+            $DYNAMIC_IP_PREF \
+            $CURL_BIND_OPT \
+            --http2 \
+            -m 10 \
+            -s \
+            -o /dev/null \
+            -w "%{http_code}" \
+            -A "$SESSION_UA" \
+            -H "Accept-Language: ${LANG_ACCEPT}" \
+            "https://connectivitycheck.gstatic.com/generate_204")
+        ;;
+
+esac
     
     log "$MODULE_NAME" "EXEC " "动作[$i/$TOTAL_ACTIONS]完成 | HTTP状态: $CODE | 抖动坐标: $ACTION_LAT, $ACTION_LON"
     
@@ -166,7 +261,13 @@ for ((i=1; i<=TOTAL_ACTIONS; i++)); do
     # 结合动作总数，总耗时将稳定在 10 分钟 到 20 分钟之间
     if [ $i -lt $TOTAL_ACTIONS ]; then
         # 【时间收敛修复】休眠控制在 45-75 秒，防止跨周期重叠导致进程被强杀
-        SLEEP_TIME=$((45 + RANDOM % 31))
+                # 80% 正常停留
+        if [ $((RANDOM % 10)) -lt 8 ]; then
+            SLEEP_TIME=$((45 + RANDOM % 31))
+        else
+            # 20% 长时间挂机（模拟真实阅读）
+            SLEEP_TIME=$((120 + RANDOM % 181))
+        fi
         log "$MODULE_NAME" "WAIT " "阅读当前页面内容，模拟停留 $SLEEP_TIME 秒..."
         sleep $SLEEP_TIME
     fi
@@ -181,7 +282,12 @@ done
 log "$MODULE_NAME" "INFO " "启动三核交叉验证 (URL跳转 + YT Premium + YT Music) 穿透获取 GeoIP..."
 
 # 核心 1: 传统 URL 跳转探测 (请求 www 才能触发准确跳转)
-JUMP_HDR=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -sI "http://www.google.com/")
+JUMP_HDR=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF \
+    --http2 \
+    -b "$COOKIE_FILE" -c "$COOKIE_FILE" \
+    -A "$SESSION_UA" \
+    -H "Accept-Language: ${LANG_ACCEPT}" \
+    -m 10 -sI "http://www.google.com/")
 JUMP_LOC=$(echo "$JUMP_HDR" | grep -i "^location:" | tr -d '\r\n')
 JUMP_GL=""
 
@@ -229,7 +335,13 @@ fi
 # 核心 2: YouTube Premium 探测
 YT_PR_GL=""
 # [修复] 必须带上本轮循环的专属 UA (-A "$SESSION_UA")，防止被 Google CDN 丢进无状态爬虫兜底页
-YT_PR_HTML=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -L -A "$SESSION_UA" "https://www.youtube.com/premium")
+YT_PR_HTML=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF \
+    --http2 \
+    -b "$COOKIE_FILE" -c "$COOKIE_FILE" \
+    -m 10 -s -L \
+    -A "$SESSION_UA" \
+    -H "Accept-Language: ${LANG_ACCEPT}" \
+    "https://www.youtube.com/premium")
 if [[ "$YT_PR_HTML" == *"www.google.cn"* ]]; then
     YT_PR_GL="CN"
 else
@@ -242,7 +354,13 @@ fi
 # 核心 3: YouTube Music 探测
 YT_MU_GL=""
 # [修复] 同样加持 UA 装甲，强行唤出完整版前端框架
-YT_MU_HTML=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF -m 10 -s -L -A "$SESSION_UA" "https://music.youtube.com/")
+YT_MU_HTML=$(curl $CURL_BIND_OPT $DYNAMIC_IP_PREF \
+    --http2 \
+    -b "$COOKIE_FILE" -c "$COOKIE_FILE" \
+    -m 10 -s -L \
+    -A "$SESSION_UA" \
+    -H "Accept-Language: ${LANG_ACCEPT}" \
+    "https://music.youtube.com/")
 if [[ "$YT_MU_HTML" == *"www.google.cn"* ]]; then
     YT_MU_GL="CN"
 else

@@ -475,24 +475,25 @@ import socket
 # ================== [v3.0.3 变更: 引入多线程模型抵抗 Slowloris 攻击] ==================
 class ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True # 开启端口复用，防止热重启时端口冲突
-    
-    # [核心修复] 显式关闭 V6ONLY 参数，治愈大量云主机纯双栈下的 IPv4 耳聋现象
-    def server_bind(self):
-        if self.address_family == socket.AF_INET6:
-            try:
-                self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-            except Exception:
-                pass
-        super().server_bind()
 
-try:
-    # 1. 优先尝试监听双栈/IPv6
-    ThreadedServer.address_family = socket.AF_INET6
-    httpd = ThreadedServer(("::", PORT), AgentHandler)
-except Exception:
-    # 2. [核心修复 Issue #23] 若系统内核已禁用 IPv6，抛弃报错，智能回退至纯 IPv4 监听
-    ThreadedServer.address_family = socket.AF_INET
-    httpd = ThreadedServer(("0.0.0.0", PORT), AgentHandler)
+# [终极修复 Issue #53] 废除极易引发 LXC 容器 "IPv4 耳聋" 的模糊双栈监听
+# 改为精准探底：直接读取配置文件中的公网 IP 类型，动态决定单一监听协议
+bind_addr = "0.0.0.0"
+ThreadedServer.address_family = socket.AF_INET
+
+config_path = '/opt/ip_sentinel/config.conf'
+if os.path.exists(config_path):
+    with open(config_path, 'r', errors='ignore') as f:
+        for line in f:
+            if line.startswith('PUBLIC_IP='):
+                pub_ip = line.split('=', 1)[1].strip('"\'')
+                # 如果注册的是 IPv6 节点，则精准监听 IPv6，否则一律兜底监听 IPv4
+                if ':' in pub_ip:
+                    bind_addr = "::"
+                    ThreadedServer.address_family = socket.AF_INET6
+                break
+
+httpd = ThreadedServer((bind_addr, PORT), AgentHandler)
 
 # ================== [v3.6.3 核心: 挂载 TLS 加密隧道 (强制装甲版)] ==================
 import ssl

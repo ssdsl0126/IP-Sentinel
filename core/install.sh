@@ -19,6 +19,49 @@ SECURE_TMP=$(mktemp -d /tmp/ips_install.XXXXXX)
 # 确保脚本退出、异常中断或被强杀时，自动销毁沙盒，不留痕迹
 trap 'rm -rf "$SECURE_TMP"' EXIT HUP INT QUIT TERM
 
+# ==========================================================
+# 🔍 核心探针: 系统环境与虚拟化检测 (v4.0.13 架构升级)
+# ==========================================================
+is_systemd() {
+    command -v systemctl >/dev/null 2>&1 || return 1
+    [ -d /run/systemd/system ] || return 1
+    return 0
+}
+
+get_os_info() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        echo "$PRETTY_NAME"
+    else
+        uname -srm
+    fi
+}
+
+get_virt_info() {
+    if grep -qaE 'docker|containerd|podman' /proc/1/cgroup 2>/dev/null || [ -f /.dockerenv ]; then
+        echo "Docker/OCI Container"
+    elif grep -qa container=lxc /proc/1/environ 2>/dev/null || [ -d /proc/vz ]; then
+        echo "LXC/OpenVZ"
+    elif command -v systemd-detect-virt >/dev/null 2>&1; then
+        systemd-detect-virt
+    else
+        echo "Unknown/Bare Metal"
+    fi
+}
+
+echo -e "\n======================================"
+echo -e "📊 \033[36mIP-Sentinel 靶机环境侦测预检\033[0m"
+echo -e "--------------------------------------"
+echo -e "OS 架构   : $(get_os_info)"
+echo -e "虚拟化    : $(get_virt_info)"
+if is_systemd; then
+    echo -e "Init 系统 : systemd ✅"
+else
+    echo -e "Init 系统 : 非 systemd ⚠️ (将自动降维至守护循环)"
+fi
+echo -e "======================================\n"
+sleep 1
+
 # 你的 GitHub 仓库 Raw 数据直链前缀
 REPO_RAW_URL="https://raw.githubusercontent.com/ssdsl0126/IP-Sentinel/main"
 
@@ -26,8 +69,8 @@ INSTALL_DIR="/opt/ip_sentinel"
 CONFIG_FILE="${INSTALL_DIR}/config.conf"
 
 # [核心: 动态提取 Agent 专属版本锚点 (KV 解析法)]
-# [修复] 增加 -L 与双栈容灾 (-4)，解决纯 V6 或 V6 优先机器连接 GitHub Raw 易超时的问题
-TARGET_VERSION=$( (curl -sL -m 5 "${REPO_RAW_URL}/version.txt" || curl -4 -sL -m 5 "${REPO_RAW_URL}/version.txt") 2>/dev/null | grep "^AGENT_VERSION=" | cut -d'=' -f2 | tr -d '[:space:]')
+# [红警修复] 增加 -f 与 --retry 护甲，防御 404 被当作脚本下载执行的毁灭级 Bug
+TARGET_VERSION=$( (curl -fsSL --connect-timeout 5 --retry 2 "${REPO_RAW_URL}/version.txt" || curl -4 -fsSL --connect-timeout 5 --retry 2 "${REPO_RAW_URL}/version.txt") 2>/dev/null | grep "^AGENT_VERSION=" | cut -d'=' -f2 | tr -d '[:space:]')
 # 🛡️ 兜底防线：如果网络波动拉取失败，启用内置的安全兜底版本
 TARGET_VERSION=${TARGET_VERSION:-"4.0.0"}
 
@@ -62,16 +105,24 @@ if [ ${#MISSING_CMDS[@]} -gt 0 ]; then
         apt-get install -y --no-install-recommends curl jq cron procps python3 openssl >/dev/null 2>&1
         systemctl enable cron >/dev/null 2>&1 && systemctl start cron >/dev/null 2>&1
         
-    elif command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1; then
-        # RHEL / CentOS / AlmaLinux 系列
+    elif command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1 || command -v microdnf >/dev/null 2>&1; then
+        # RHEL / CentOS / AlmaLinux / Rocky 系列 (含极简 microdnf 镜像)
         PKG_MGR="yum"
         OPT_ARGS=""
         if command -v dnf >/dev/null 2>&1; then
             PKG_MGR="dnf"
             # [v3.6.3 抽脂级优化] 强行关闭 DNF 的弱依赖拉取
             OPT_ARGS="--setopt=install_weak_deps=False"
+        elif command -v microdnf >/dev/null 2>&1; then
+            PKG_MGR="microdnf"
         fi
-        $PKG_MGR install -y $OPT_ARGS curl jq cronie procps-ng python3 openssl >/dev/null 2>&1
+        
+        echo -e "\033[90m   (正在安装 epel-release 扩展源，请稍候...)\033[0m"
+        $PKG_MGR install -y epel-release >/dev/null 2>&1 || true
+        
+        echo -e "\033[90m   (正在拉取核心组件...)\033[0m"
+        # [核心修复] 移除屏蔽符，暴露真实执行过程，打破“没有调用”的假象
+        $PKG_MGR install -y $OPT_ARGS curl jq cronie procps-ng python3 openssl
         systemctl enable crond >/dev/null 2>&1 && systemctl start crond >/dev/null 2>&1
         
     elif command -v apk >/dev/null 2>&1; then
@@ -114,7 +165,7 @@ echo -e "\033[32m✅ 基础环境检测通过。\033[0m"
 
 # 2. 交互式引导与动态地图解析 (v3.0 全球网络)
 echo -e "\n[2/7] 正在连线云端，拉取全球节点地图..."
-curl -sL "${REPO_RAW_URL}/data/map.json" -o "${SECURE_TMP}/map.json"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/data/map.json" -o "${SECURE_TMP}/map.json"
 if [ ! -s "${SECURE_TMP}/map.json" ]; then
     echo -e "\033[31m❌ 拉取全球地图失败！请检查网络或 GitHub 仓库地址。\033[0m"
     exit 1
@@ -140,7 +191,7 @@ else
 
     if [ "$ACTION_CHOICE" == "2" ]; then
         echo -e "\n⏳ 正在拉取卸载程序..."
-        curl -sL "${REPO_RAW_URL}/core/uninstall.sh" -o "${SECURE_TMP}/ip_uninstall.sh"
+        curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/uninstall.sh" -o "${SECURE_TMP}/ip_uninstall.sh"
         chmod +x "${SECURE_TMP}/ip_uninstall.sh"
         bash "${SECURE_TMP}/ip_uninstall.sh"
         rm -f "${SECURE_TMP}/ip_uninstall.sh"
@@ -503,7 +554,7 @@ if [ "$UPGRADE_MODE" == "false" ]; then
     # 5. 远程拉取冷数据并解析固化
     echo -e "\n[5/7] 正在从云端数据仓库拉取 [${CITY_NAME}] 节点的底层规则..."
     REGION_JSON_FILE="${INSTALL_DIR}/data/regions/${COUNTRY_ID}/${STATE_ID}/${CITY_ID}.json"
-    curl -sL "${REPO_RAW_URL}/data/regions/${COUNTRY_ID}/${STATE_ID}/${CITY_ID}.json" -o "$REGION_JSON_FILE"
+    curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/data/regions/${COUNTRY_ID}/${STATE_ID}/${CITY_ID}.json" -o "$REGION_JSON_FILE"
 
     if [ ! -s "$REGION_JSON_FILE" ]; then
         echo "❌ 拉取或解析规则失败！请检查 Forgejo 仓库是否公开或网络是否畅通。"
@@ -632,14 +683,14 @@ TMP_CORE="${SECURE_TMP}/core_update"
 mkdir -p "$TMP_CORE"
 
 # 拉取核心代码至临时区
-curl -sL "${REPO_RAW_URL}/core/runner.sh" -o "${TMP_CORE}/runner.sh"
-curl -sL "${REPO_RAW_URL}/core/updater.sh" -o "${TMP_CORE}/updater.sh"
-curl -sL "${REPO_RAW_URL}/core/tg_report.sh" -o "${TMP_CORE}/tg_report.sh"
-curl -sL "${REPO_RAW_URL}/core/agent_daemon.sh" -o "${TMP_CORE}/agent_daemon.sh"
-curl -sL "${REPO_RAW_URL}/core/uninstall.sh" -o "${TMP_CORE}/uninstall.sh"
-curl -sL "${REPO_RAW_URL}/core/mod_google.sh" -o "${TMP_CORE}/mod_google.sh"
-curl -sL "${REPO_RAW_URL}/core/mod_trust.sh" -o "${TMP_CORE}/mod_trust.sh"
-curl -sL "${REPO_RAW_URL}/core/mod_quality.sh" -o "${TMP_CORE}/mod_quality.sh"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/runner.sh" -o "${TMP_CORE}/runner.sh"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/updater.sh" -o "${TMP_CORE}/updater.sh"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/tg_report.sh" -o "${TMP_CORE}/tg_report.sh"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/agent_daemon.sh" -o "${TMP_CORE}/agent_daemon.sh"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/uninstall.sh" -o "${TMP_CORE}/uninstall.sh"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/mod_google.sh" -o "${TMP_CORE}/mod_google.sh"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/mod_trust.sh" -o "${TMP_CORE}/mod_trust.sh"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/core/mod_quality.sh" -o "${TMP_CORE}/mod_quality.sh"
 
 # 🛡️ 防砖终极校验：检查关键文件是否真实存在且不为空
 if [ ! -s "${TMP_CORE}/runner.sh" ] || [ ! -s "${TMP_CORE}/agent_daemon.sh" ]; then
@@ -652,7 +703,7 @@ fi
 # 🟢 [原子化交接核心]: 校验完美通过，新代码已在本地备妥！
 # 此时再以雷霆手段镇压旧进程，杜绝遗言陷阱与断网变砖的可能！
 echo "⏳ 新引擎校验通过，正在抹杀旧版守护进程..."
-if command -v systemctl >/dev/null 2>&1; then
+if is_systemd; then
     systemctl kill --signal=SIGKILL ip-sentinel-agent-daemon.service >/dev/null 2>&1 || true
     systemctl stop ip-sentinel-runner.timer ip-sentinel-updater.timer ip-sentinel-report.timer ip-sentinel-agent-daemon.service >/dev/null 2>&1 || true
 fi
@@ -667,12 +718,12 @@ mv "$TMP_CORE" "${INSTALL_DIR}/core"
 chmod +x ${INSTALL_DIR}/core/*.sh
 
 # 拉取热数据与词库
-curl -sL "${REPO_RAW_URL}/data/user_agents.txt" -o "${INSTALL_DIR}/data/user_agents.txt"
+curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/data/user_agents.txt" -o "${INSTALL_DIR}/data/user_agents.txt"
 if [ "$UPGRADE_MODE" == "false" ]; then
-    curl -sL "${REPO_RAW_URL}/data/keywords/${KEYWORD_FILE}" -o "${INSTALL_DIR}/data/keywords/${KEYWORD_FILE}"
+    curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/data/keywords/${KEYWORD_FILE}" -o "${INSTALL_DIR}/data/keywords/${KEYWORD_FILE}"
 else
     # 升级模式：利用已有的 REGION_CODE 更新通用词库
-    curl -sL "${REPO_RAW_URL}/data/keywords/kw_${REGION_CODE}.txt" -o "${INSTALL_DIR}/data/keywords/kw_${REGION_CODE}.txt" 2>/dev/null || true
+    curl -fsSL --connect-timeout 10 --retry 3 "${REPO_RAW_URL}/data/keywords/kw_${REGION_CODE}.txt" -o "${INSTALL_DIR}/data/keywords/kw_${REGION_CODE}.txt" 2>/dev/null || true
 fi
 
 # 7. 配置系统定时任务 (高频调度与看门狗)
@@ -685,7 +736,7 @@ DEPLOY_UTC_MIN=$(date -u +%M)
 # [v3.3.0 新增] 初始化 UA 指纹库更新时间戳，确立 30 天滚动周期的计算锚点 (强制 UTC)
 echo $(date -u +%s) > "${INSTALL_DIR}/core/.ua_last_update"
 
-if command -v systemctl >/dev/null 2>&1; then
+if is_systemd; then
     echo "💡 检测到 Systemd 环境，正在部署原生守护服务..."
     
     # 1. Runner 核心养护模块服务与定时器

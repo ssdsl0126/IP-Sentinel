@@ -318,7 +318,7 @@ while true; do
                         send_msg "$CHAT_ID" "📢 **司令部指令下达：正在唤醒全舰队执行 OTA 升级...**%0A*(节点升级成功后会主动发回新的入库确认，请注意查收)*"
                         echo "$NODE_DATA" | while IFS='|' read -r NNAME AIP APORT; do
                             TARGET_URL=$(generate_signed_url "$AIP" "$APORT" "/trigger_ota")
-                            curl -k -s -m 5 "$TARGET_URL" > /dev/null &
+                            curl -k -s --connect-timeout 5 -m 15 "$TARGET_URL" > /dev/null &
                             sleep 0.3  # 严格流量削峰
                         done
                     fi
@@ -379,7 +379,7 @@ while true; do
                         send_msg "$CHAT_ID" "📢 **司令部指令下达：正在召唤所有哨兵回传简报...**%0A*(为防止触发 TG 官方限流，简报将排队依次送达，请耐心等待)*"
                         echo "$NODE_DATA" | while IFS='|' read -r NNAME AIP APORT; do
                             TARGET_URL=$(generate_signed_url "$AIP" "$APORT" "/trigger_report")
-                            curl -k -s -m 5 "$TARGET_URL" > /dev/null &
+                            curl -k -s --connect-timeout 5 -m 15 "$TARGET_URL" > /dev/null &
                             # [致命修复] 强行休眠 2 秒！错开 TG 官方 1条/秒 的发信红线
                             sleep 2  
                         done
@@ -395,7 +395,7 @@ while true; do
                         send_msg "$CHAT_ID" "📢 **司令部指令下达：正在唤醒所有哨兵执行系统维护...**"
                         echo "$NODE_DATA" | while IFS='|' read -r NNAME AIP APORT; do
                             TARGET_URL=$(generate_signed_url "$AIP" "$APORT" "/trigger_run")
-                            curl -k -s -m 5 "$TARGET_URL" > /dev/null &
+                            curl -k -s --connect-timeout 5 -m 15 "$TARGET_URL" > /dev/null &
                             sleep 0.2  # [新增] 流量削峰：防止瞬间 fork 导致句柄耗尽
                         done
                     fi
@@ -423,7 +423,7 @@ while true; do
                             
                             # 动态 HMAC 签名防篡改
                             TARGET_URL=$(generate_signed_url "$AGENT_IP" "$AGENT_PORT" "/trigger_quality")
-                            RESPONSE=$(curl -k -s -m 5 "$TARGET_URL" || echo "FAILED")
+                            RESPONSE=$(curl -k -s --connect-timeout 5 -m 15 "$TARGET_URL" || echo "FAILED")
                             
                             # 结果判定
                             if [ "$RESPONSE" == "FAILED" ]; then
@@ -595,7 +595,7 @@ while true; do
                         TARGET_URL=$(generate_signed_url "$AGENT_IP" "$AGENT_PORT" "/trigger_toggle")
                         TARGET_URL="${TARGET_URL}&mod=${MOD_NAME}&state=${TARGET_STATE}"
                         
-                        RESPONSE=$(curl -k -s -m 5 "$TARGET_URL" || echo "FAILED")
+                        RESPONSE=$(curl -k -s --connect-timeout 5 -m 15 "$TARGET_URL" || echo "FAILED")
                         
                         if [[ "$RESPONSE" == *"Action Accepted"* ]]; then
                             # 下发成功，更新 DB，原位重绘
@@ -702,7 +702,7 @@ while true; do
                         ALIAS_B64=$(echo -n "$NEW_ALIAS" | base64 | tr -d '\n' | tr '+/' '-_')
                         TARGET_URL="${TARGET_URL}&b64=${ALIAS_B64}"
                         
-                        RESPONSE=$(curl -k -s -m 5 "$TARGET_URL" || echo "FAILED")
+                        RESPONSE=$(curl -k -s --connect-timeout 5 -m 15 "$TARGET_URL" || echo "FAILED")
                         
                         if [ "$RESPONSE" == "FAILED" ]; then
                             send_msg "$CHAT_ID" "❌ 指令下发超时！为防范劫持风险，已终止请求。"
@@ -742,7 +742,7 @@ while true; do
                         fi
                         
                         TARGET_URL=$(generate_signed_url "$AGENT_IP" "$AGENT_PORT" "/trigger_ota")
-                        RESPONSE=$(curl -k -s -m 5 "$TARGET_URL" || echo "FAILED")
+                        RESPONSE=$(curl -k -s --connect-timeout 5 -m 15 "$TARGET_URL" || echo "FAILED")
                         
                         if [ "$RESPONSE" == "FAILED" ]; then
                             TEXT_RES="❌ OTA 指令下发彻底失败！链路异常或严禁使用 HTTP 降级通讯。"
@@ -783,7 +783,7 @@ while true; do
                         
                         # 🛡️ [v3.0.4] 动态签名生成与触发 (防重放与防篡改)
                         TARGET_URL=$(generate_signed_url "$AGENT_IP" "$AGENT_PORT" "/trigger_${ACTION_TYPE}")
-                        RESPONSE=$(curl -k -s -m 5 "$TARGET_URL" || echo "FAILED")
+                        RESPONSE=$(curl -k -s --connect-timeout 5 -m 15 "$TARGET_URL" || echo "FAILED")
                         
                         # 结果判定
                         if [ "$RESPONSE" == "FAILED" ]; then
