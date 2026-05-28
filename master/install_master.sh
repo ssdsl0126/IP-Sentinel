@@ -226,6 +226,33 @@ mkdir -p "$MASTER_DIR"
 # ==========================================================
 # [配置总线] 构建交互与策略文件固化
 # ==========================================================
+if [ "$UPGRADE_MODE" == "false" ]; then
+    echo -e "\n[2/4] 配置控制中枢机器人:"
+    read -p "请输入 Telegram Bot Token: " TG_TOKEN
+
+    ENABLE_MASTER_OTA="false"
+    echo -e "\n[2.1/4] 司令部自我进化授权"
+    echo -e "💡 开启后，您可以在 TG 菜单一键将中枢核心系统热更新至最新版本。"
+    read -p "是否允许司令部接收 OTA 重构指令？(y/n, 默认y): " M_OTA_CHOICE
+    if [[ "$M_OTA_CHOICE" =~ ^[Nn]$ ]]; then
+        ENABLE_MASTER_OTA="false"
+        echo -e "🛡️ \033[33m已关闭司令部 OTA 权限，中枢内核未来仅支持 SSH 升级。\033[0m"
+    else
+        ENABLE_MASTER_OTA="true"
+        echo -e "✅ \033[32m已开启司令部 OTA 权限，金蝉脱壳引信已挂载。\033[0m"
+    fi
+
+    cat > "${MASTER_DIR}/master.conf" << EOF
+# IP-Sentinel Master 本地固化配置 (v${TARGET_VERSION})
+MASTER_VERSION="$TARGET_VERSION"
+TG_TOKEN="$TG_TOKEN"
+DB_FILE="$DB_FILE"
+MASTER_DIR="$MASTER_DIR"
+IS_OFFICIAL_GATEWAY="false"
+ENABLE_MASTER_OTA="$ENABLE_MASTER_OTA"
+EOF
+fi
+
 if [ "$UPGRADE_MODE" == "true" ]; then
     if ! grep -q "^IS_OFFICIAL_GATEWAY=" "${MASTER_DIR}/master.conf"; then
         echo "IS_OFFICIAL_GATEWAY=\"false\"" >> "${MASTER_DIR}/master.conf"
@@ -306,6 +333,7 @@ After=network.target
 Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 SyslogIdentifier=ip-sentinel
 Type=simple
+ExecStart=/bin/bash ${MASTER_DIR}/tg_master.sh
 Restart=always
 RestartSec=5
 User=root
@@ -357,4 +385,3 @@ echo "========================================================"
 
 echo -e "\n========================================================"
 echo -e "========================================================\n"
-
