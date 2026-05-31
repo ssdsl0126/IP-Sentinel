@@ -1,11 +1,15 @@
 ig
+nba
+fotmob
+sports
+live
+champions league final
 1
 outlook
 ရန်ကုန်
 palace vs rayo vallecano
 သီချင်း
 mpl ph
-nba
 afghanistan
 inter miami vs philadelphia
 villarreal vs atlético madrid
@@ -15,7 +19,6 @@ crystal palace f.c. vs arsenal f.c. standings
 west ham vs leeds united f.c. standings
 livescore
 liverpool
-fotmob
 premier league standings
 valencia cf vs fc barcelona standings
 real madrid vs athletic club
@@ -95,6 +98,3 @@ hantavirus infections cruise ship
 myanma railways yangon mandalay upgrade
 psg vs stade brestois standings
 real madrid
-psg vs brest
-barcelona
-apple iphone 18 pro max
