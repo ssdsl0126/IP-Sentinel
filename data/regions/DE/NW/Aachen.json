@@ -1,0 +1,52 @@
+{
+  "version": "3.5.2",
+  "updated_at": "2026-06-01",
+  "region_name": "Germany - Aachen",
+  "google_module": {
+    "base_lat": 50.7753,
+    "base_lon": 6.0839,
+    "lang_params": "hl=de&gl=DE",
+    "valid_url_suffix": "de"
+  },
+  "trust_module": {
+    "white_urls": [
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE1aM21QYkdaR19BNDR0LUJ4MlpjNmVpU0dQa205Y1o0?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE5hM3RjWGZWa2tCUElVRE1qTEtZSUZ5c0lQeWRjUmt3?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9kMkRfZ2YyWDRBc3MwbWwzUXBfbjE5dE1ZZnA2TUE4?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE5pX2JiYjNfbF9lSXZ2QWhzX05aOEx1RmxhNThLUVNR?oc=5",
+      "https://www.spiegel.de/",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTFBmOThYVXZiV2NfNW9fUGt1Wm5tUGZzM05faXZyUFRB?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTFAxbXNZTXZqMndjWm91WnhnLUxkNlEwaTVOUEI5WGpn?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE5WOTRfaHBaQzNWdkhnUEtIdmR0TElQVWdPa1hJbFE0?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTFAxbG1Zc1FZa2J1WnhhQ01qS3BxTjJPU2Q1WGplUEp3?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9oMGQ5VldoZnZqMzV1WXdnQ0w0TjJOSzNNaWw2Wldn?oc=5",
+      "https://www.zeit.de/",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE94VzNpX1I0S2k2Y2s2WnhfTldyYjBPa2V0Z1pqWGln?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9qYmN0X1YtTHk5dFk3WllOa0h4OExyZmxYMWc4WkhR?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9uMnhfaWpVa2FvN205Q3djS2w5a0R1RmxhNThLUVNR?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9oMHQxWlhfZmp0WnhhQzFKc1hxTjJPU2Q1WGplUEp3?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE5uOXNqWnhfXzJ0X3o2WnhfNWVwTjJOSzNNaWw2Wldn?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9oMnhfaVpfS3FvNXo2WnhfNWVwTjJPU2Q1WGplUEp3?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9xZmxqWlhkS2k2YzB1WnhfNldyYjBPa2V0Z1pqWGln?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9nMGQxdFpYX2Y4czV1WXdnQ0w0TjJOSzNNaWw2Wldn?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9xN3RqWlhdS2k2YzJ1WnhfNldyYjBPa2V0Z1pqWGln?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE5oMnhfaVpfS3E5WnhhQzFKc1hxTjJPU2Q1WGplUEp3?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9qYmN0X1YtTHk5dFk5WllOa0h4OExyZmxYMWc4WkhR?oc=5",
+      "https://www.tagesschau.de/",
+      "https://www.faz.net/",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9qYmN0X1YtTHk5dGFnWllOa0h4OExyZmxYMWc4WkhR?oc=5",
+      "https://www.sueddeutsche.de/",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9oMnhfaVpfS3FvNXo5WnhfNWVwTjJPU2Q1WGplUEp3?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9xN3RqWlhdS2k2YzJ1WnhfNldyYjBPa2V0Z1pqWGln?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9nMGQxdFpYX2Y4czV1WXdnQ0w0TjJOSzNNaWw2Wldn?oc=5",
+      "https://news.google.com/rss/articles/CBMiJkFVX3lxTE9qYmN0X1YtTHk5dFk5WllOa0h4OExyZmxYMWc4WkhR?oc=5"
+    ],
+    "static_urls": [
+      "https://www.spiegel.de/",
+      "https://www.zeit.de/",
+      "https://www.tagesschau.de/",
+      "https://www.faz.net/",
+      "https://www.sueddeutsche.de/"
+    ]
+  }
+}

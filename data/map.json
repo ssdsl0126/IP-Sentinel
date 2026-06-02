@@ -395,6 +395,23 @@
           ]
         },
         {
+          "id": "BG",
+          "name": "Bulgaria (保加利亚)",
+          "keyword_file": "kw_BG.txt",
+          "states": [
+            {
+              "id": "Default",
+              "name": "Default State",
+              "cities": [
+                {
+                  "id": "Sofia",
+                  "name": "Sofia (索非亚)"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "id": "DE",
           "name": "Germany (德国)",
           "keyword_file": "kw_DE.txt",
@@ -436,6 +453,16 @@
                 {
                   "id": "Berlin",
                   "name": "Berlin (柏林)"
+                }
+              ]
+            },
+            {
+              "id": "NW",
+              "name": "North Rhine-Westphalia (北莱茵-威斯特法伦州)",
+              "cities": [
+                {
+                  "id": "Aachen",
+                  "name": "Aachen (亚琛)"
                 }
               ]
             }
@@ -528,16 +555,10 @@
                 {
                   "id": "San_Jose",
                   "name": "San Jose (圣何塞)"
-                }
-              ]
-            },
-            {
-              "id": "CO",
-              "name": "Colorado (科罗拉多州)",
-              "cities": [
+                },
                 {
-                  "id": "Boulder",
-                  "name": "Boulder (博尔德)"
+                  "id": "Fremont",
+                  "name": "Fremont (弗里蒙特)"
                 }
               ]
             },
@@ -562,7 +583,7 @@
               ]
             },
             {
-              "id": "Hawaii",
+              "id": "HI",
               "name": "Hawaii",
               "cities": [
                 {
