@@ -1,4 +1,13 @@
+europe 1
+ascenseur
+sept à huit
+meteo montpellier
+meteo poitiers
+meteo angers
+vigilance forte canicule
 weer
+tgv
+tiempo
 daily mail
 marion rousse porte jarretelle
 pogoda
@@ -11,7 +20,6 @@ dna
 monnaie
 gala
 météo nantes
-europe 1
 info
 infos
 jorge martín
@@ -90,11 +98,3 @@ héritage
 enseignant
 résultat match coupe du monde
 population active
-thonon-les-bains
-moissonneuse
-finistère
-l'amour est dans le pré
-clément berthet
-grotte
-lons-le-saunier
-fédération sénégalaise de football
