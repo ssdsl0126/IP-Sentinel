@@ -1,3 +1,13 @@
+fanatik
+francja anglia
+promosyon
+elektrik kesintisi
+pogoda
+hürriyet
+didem arslan yılmaz
+polis
+şok
+nefes gazetesi
 türkiye kadın millî voleybol takımı
 japonya
 samsun hava durumu
@@ -60,7 +70,6 @@ medyabar
 cnn türk
 bet365
 otomobil
-elektrik kesintisi
 wm spielplan
 istanbul büyükşehir belediye meclisi
 kıbrıs
@@ -78,7 +87,6 @@ ihale
 bekçi alımı
 ismet acar
 milliyet
-hürriyet
 motorine zam geldi
 whatsapp
 en son haber
@@ -90,11 +98,3 @@ bloomberg
 merkez bankası
 hitap
 teb
-ekşi
-togg
-sermaye artırımı
-galatasaray
-ispanya hükûmeti
-çeyrek final maçları
-altın
-trt spor yıldız
